@@ -91,69 +91,143 @@ function openAdmin() {
 function closeAdmin() {
   document.getElementById('modal-admin').classList.add('hidden')
   document.body.style.overflow = ''
+  document.getElementById('create-user-error').classList.add('hidden')
+  document.getElementById('new-username').value = ''
+  document.getElementById('new-password').value = ''
 }
 
 async function loadUsersList() {
-  const listEl = document.getElementById('users-list')
-  listEl.innerHTML = '<p style="color:var(--muted);font-size:.8rem">Cargando…</p>'
+  const listEl  = document.getElementById('users-list')
+  const countEl = document.getElementById('users-count')
+  listEl.innerHTML = `
+    <div class="user-row-loading">
+      <span class="sync-status sync-syncing" style="margin:0">⟳ Cargando usuarios…</span>
+    </div>`
+
+  if (!window.db) {
+    listEl.innerHTML = '<p class="admin-error">⚠️ Firebase no disponible. Recargá la página.</p>'
+    return
+  }
+
   try {
     const snap = await window.db.collection('users').get()
     const users = []
     snap.forEach(d => users.push({ uid: d.id, ...d.data() }))
     users.sort((a, b) => (a.username || '').localeCompare(b.username || ''))
+
+    if (countEl) countEl.textContent = `${users.length} usuario${users.length !== 1 ? 's' : ''}`
+
+    if (users.length === 0) {
+      listEl.innerHTML = '<p class="admin-empty">No hay usuarios registrados todavía.</p>'
+      return
+    }
+
     listEl.innerHTML = ''
     users.forEach(u => {
-      const got = Object.keys(u.state || {}).filter(k => (u.state[k]||0) >= 1).length
-      const pct = Math.round(got / 980 * 100)
-      const row = document.createElement('div')
+      const got  = Object.keys(u.state || {}).filter(k => (u.state[k] || 0) >= 1).length
+      const pct  = Math.round(got / 980 * 100)
+      const date = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'
+      const row  = document.createElement('div')
       row.className = 'user-row'
       row.innerHTML = `
-        <div class="user-row-info">
-          <strong>${u.username}</strong>
-          ${u.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
-          <span class="user-pct">${pct}% · ${got} láminas</span>
+        <div class="user-row-main">
+          <div class="user-row-top">
+            <strong class="user-row-name">👤 ${u.username}</strong>
+            ${u.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+          </div>
+          <div class="user-row-meta">
+            <span class="user-pct">📊 ${pct}% · ${got} láminas</span>
+            <span class="user-date">📅 ${date}</span>
+          </div>
         </div>
-        ${!u.isAdmin ? `<button class="btn-del-user" data-uid="${u.uid}" title="Eliminar">🗑</button>` : ''}
+        ${!u.isAdmin ? `
+          <div class="user-row-actions">
+            <button class="btn-del-user" data-uid="${u.uid}" data-name="${u.username}" title="Eliminar usuario">🗑 Eliminar</button>
+          </div>` : ''}
       `
       listEl.appendChild(row)
     })
+
     listEl.querySelectorAll('.btn-del-user').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!confirm('¿Eliminar este usuario? Se borrarán todos sus datos.')) return
-        await window.db.collection('users').doc(btn.dataset.uid).delete()
-        loadUsersList()
+        const name = btn.dataset.name
+        if (!confirm(`¿Eliminar al usuario "${name}"?\nSe borrarán todos sus datos del álbum.`)) return
+        btn.disabled = true; btn.textContent = 'Eliminando…'
+        try {
+          await window.db.collection('users').doc(btn.dataset.uid).delete()
+          loadUsersList()
+        } catch(e) {
+          alert('Error al eliminar: ' + e.message)
+          btn.disabled = false; btn.textContent = '🗑 Eliminar'
+        }
       })
     })
+
   } catch(e) {
-    listEl.innerHTML = '<p style="color:#f87171;font-size:.8rem">Error al cargar usuarios.</p>'
+    console.error('loadUsersList error:', e)
+    listEl.innerHTML = `
+      <p class="admin-error">⚠️ Error al cargar usuarios: ${e.message}</p>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">
+        Verificá las reglas de Firestore (deben permitir lectura autenticada).
+      </p>`
   }
 }
 
 async function createUser(username, password) {
   const errEl = document.getElementById('create-user-error')
   errEl.classList.add('hidden')
-  if (username.length < 3) { errEl.textContent='Mínimo 3 caracteres'; errEl.classList.remove('hidden'); return }
-  if (password.length < 6) { errEl.textContent='Mínimo 6 caracteres para la contraseña'; errEl.classList.remove('hidden'); return }
+
+  const uname = username.trim()
+  if (uname.length < 3)  { errEl.textContent = 'Mínimo 3 caracteres para el usuario'; errEl.classList.remove('hidden'); return }
+  if (password.length < 6) { errEl.textContent = 'Mínimo 6 caracteres para la contraseña'; errEl.classList.remove('hidden'); return }
+  if (!window.secondaryAuth) { errEl.textContent = 'Error interno: Firebase Auth no disponible'; errEl.classList.remove('hidden'); return }
 
   const btn = document.getElementById('create-user-btn')
-  btn.disabled = true; btn.textContent = 'Creando…'
+  btn.disabled = true; btn.textContent = '⟳ Creando…'
+
+  let uid = null
   try {
-    // Usar app secundaria para no perder sesión de admin
-    const cred = await window.secondaryAuth.createUserWithEmailAndPassword(toEmail(username), password)
-    await cred.user.updateProfile({ displayName: username })
-    await window.db.collection('users').doc(cred.user.uid).set({
-      username, isAdmin: false, state: {},
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    // Paso 1: crear en Firebase Auth (app secundaria para no perder sesión admin)
+    const cred = await window.secondaryAuth.createUserWithEmailAndPassword(toEmail(uname), password)
+    uid = cred.user.uid
+    await cred.user.updateProfile({ displayName: uname })
+
+    // Paso 2: crear documento en Firestore
+    await window.db.collection('users').doc(uid).set({
+      username: uname,
+      isAdmin: false,
+      state: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     })
+
+    // Paso 3: cerrar sesión de la app secundaria
     await window.secondaryAuth.signOut()
+
+    // Limpiar formulario y recargar lista
     document.getElementById('new-username').value = ''
     document.getElementById('new-password').value = ''
-    alert(`✅ Usuario "${username}" creado correctamente`)
+    errEl.classList.add('hidden')
+
+    // Mostrar éxito en la lista
     loadUsersList()
+    // Mostrar badge de éxito temporario
+    const okMsg = document.getElementById('create-user-ok')
+    if (okMsg) { okMsg.textContent = `✅ Usuario "${uname}" creado`; okMsg.classList.remove('hidden'); setTimeout(() => okMsg.classList.add('hidden'), 3000) }
+
   } catch(e) {
-    errEl.textContent = e.code === 'auth/email-already-in-use'
-      ? 'Ese nombre de usuario ya existe'
-      : 'Error: ' + e.message
+    console.error('createUser error:', e.code, e.message)
+    // Si falló el paso 2 (Firestore), intentar limpiar el usuario de Auth
+    if (uid && e.code !== 'auth/email-already-in-use') {
+      try { await window.secondaryAuth.signOut() } catch(_) {}
+    }
+    const msgs = {
+      'auth/email-already-in-use': `El usuario "${uname}" ya existe`,
+      'auth/invalid-email':        'Nombre de usuario inválido (solo letras, números, puntos y guiones)',
+      'auth/weak-password':        'Contraseña muy débil (mínimo 6 caracteres)',
+      'permission-denied':         'Sin permisos en Firestore. Verificá las reglas de Firestore.',
+    }
+    errEl.textContent = msgs[e.code] || `Error (${e.code}): ${e.message}`
     errEl.classList.remove('hidden')
   } finally {
     btn.disabled = false; btn.textContent = '➕ Crear usuario'
@@ -1056,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('new-password').value
     )
   })
+  document.getElementById('btn-refresh-users').addEventListener('click', loadUsersList)
 
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {

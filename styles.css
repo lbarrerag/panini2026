@@ -267,15 +267,30 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var
 .btn-logout:hover{border-color:#f87171;color:#f87171}
 
 /* ── Admin panel ─────────────────────────────────────────── */
-.user-row{display:flex;align-items:center;justify-content:space-between;
-  padding:.6rem .75rem;border-radius:8px;background:var(--bg3);margin-bottom:.5rem}
-.user-row-info{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.82rem}
-.user-pct{color:var(--muted);font-size:.75rem}
-.admin-badge{background:var(--yellow);color:#000;font-size:.62rem;font-weight:800;
+.modal-inner--wide{max-width:560px}
+.admin-body{overflow-y:auto;padding:1rem 1.25rem;display:flex;flex-direction:column;gap:1.25rem}
+.admin-section{display:flex;flex-direction:column;gap:.6rem}
+.admin-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem}
+.create-user-form{display:grid;grid-template-columns:1fr 1fr auto;gap:.5rem;align-items:center}
+@media(max-width:520px){.create-user-form{grid-template-columns:1fr;}}
+.user-row{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+  padding:.7rem .9rem;border-radius:8px;background:var(--bg3);border:1px solid var(--border);margin-bottom:.45rem}
+.user-row-main{display:flex;flex-direction:column;gap:.25rem;min-width:0;flex:1}
+.user-row-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.user-row-name{font-size:.88rem}
+.user-row-meta{display:flex;gap:.75rem;flex-wrap:wrap}
+.user-pct{color:var(--muted);font-size:.72rem}
+.user-date{color:var(--muted);font-size:.72rem}
+.user-row-actions{flex-shrink:0}
+.user-row-loading{padding:.75rem 0;text-align:center}
+.admin-empty{color:var(--muted);font-size:.82rem;padding:.5rem 0;text-align:center}
+.admin-error{color:#f87171;font-size:.8rem;padding:.5rem 0}
+.admin-badge{background:var(--yellow);color:#000;font-size:.6rem;font-weight:800;
   padding:.15rem .45rem;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
 .btn-del-user{background:transparent;border:1px solid rgba(248,113,113,.4);color:#f87171;
-  border-radius:6px;padding:.3rem .55rem;font-size:.8rem;cursor:pointer;transition:all .2s}
+  border-radius:6px;padding:.3rem .6rem;font-size:.72rem;cursor:pointer;transition:all .2s;white-space:nowrap}
 .btn-del-user:hover{background:rgba(248,113,113,.15)}
+.login-ok{color:#4ade80;font-size:.78rem}
 
 /* ── Modal amigos ────────────────────────────────────────── */
 .friend-card{display:flex;align-items:center;justify-content:space-between;gap:.75rem;
