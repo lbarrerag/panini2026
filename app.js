@@ -984,7 +984,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modal-spec-close').addEventListener('click', closeSpecials)
   document.getElementById('btn-copy').addEventListener('click', copyMissing)
   document.getElementById('btn-dl').addEventListener('click', downloadMissing)
-  document.getElementById('btn-reset').addEventListener('click', resetAlbum)
   document.getElementById('btn-share').addEventListener('click', shareAlbum)
   document.getElementById('btn-specials').addEventListener('click', openSpecials)
 
