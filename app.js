@@ -591,3 +591,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-regen-code').addEventListener('click', renderMyCode)
   document.getElementById('btn-compare-run').addEventListener('click', runCompare)
 })
+
+// ─── Service Worker (PWA) ─────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/panini2026/sw.js')
+      .catch(err => console.warn('SW registration failed:', err))
+  })
+}
