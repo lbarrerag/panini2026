@@ -1,3 +1,34 @@
+// ─── Login ────────────────────────────────────────────────────────────────────
+const PASS_HASH = 'c7768f676c276b2234b19185e5919c9db1d9b905968af5536dcd16a5db9f3910'
+const AUTH_KEY  = 'panini2026_auth'
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
+async function initLogin() {
+  if (sessionStorage.getItem(AUTH_KEY) === '1') { unlockApp(); return }
+  document.getElementById('login-form').addEventListener('submit', async e => {
+    e.preventDefault()
+    const hash = await sha256(document.getElementById('login-pass').value)
+    if (hash === PASS_HASH) {
+      sessionStorage.setItem(AUTH_KEY, '1')
+      unlockApp()
+    } else {
+      document.getElementById('login-error').classList.remove('hidden')
+      document.getElementById('login-pass').value = ''
+      document.getElementById('login-pass').focus()
+    }
+  })
+}
+
+function unlockApp() {
+  document.getElementById('login-overlay').classList.add('hidden')
+}
+
+initLogin()
+
 // ─── Mi Álbum Panini 2026 ────────────────────────────────────────────────────
 const LS_KEY = 'panini2026_v1'
 

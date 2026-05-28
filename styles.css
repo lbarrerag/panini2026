@@ -16,6 +16,22 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
 
+/* ── Login overlay ──────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center}
+#login-overlay.hidden{display:none}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:1rem;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.login-logo{position:relative;width:56px;height:56px;background:#000;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:visible;box-shadow:0 2px 10px rgba(0,0,0,.6);margin-bottom:.25rem}
+.login-logo .brand-26{font-size:1.4rem;font-weight:900;color:#fff;line-height:1}
+.login-logo .brand-trophy{position:absolute;top:-8px;right:-8px;font-size:1rem}
+.login-title{font-size:.8rem;font-weight:800;letter-spacing:.15em;color:var(--yellow)}
+.login-sub{font-size:.65rem;letter-spacing:.08em;color:var(--muted);margin-top:-.5rem}
+#login-form{display:flex;flex-direction:column;gap:.75rem;width:100%;margin-top:.5rem}
+#login-pass{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--fg);font-size:.95rem;width:100%;outline:none;transition:border-color .2s}
+#login-pass:focus{border-color:var(--yellow)}
+#login-form .btn-yellow{width:100%;padding:.7rem;font-size:.95rem;border-radius:8px}
+.login-error{color:#f87171;font-size:.78rem;text-align:center}
+.login-error.hidden{display:none}
+
 /* ── Navbar ─────────────────────────────────────────── */
 .navbar{background:#0c1322;border-bottom:1px solid var(--border);padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.5rem;position:sticky;top:0;z-index:50}
 .navbar-brand{display:flex;align-items:center;gap:.75rem}
