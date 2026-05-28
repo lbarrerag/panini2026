@@ -265,35 +265,96 @@
 
   <!-- ── Modal admin ───────────────────────────────── -->
   <div class="modal hidden" id="modal-admin">
-    <div class="modal-inner modal-inner--wide">
+    <div class="modal-inner modal-inner--admin">
+
+      <!-- Cabecera -->
       <div class="modal-head">
-        <div><h2>⚙️ Mantenedor de usuarios</h2></div>
+        <div><h2>⚙️ Administración</h2></div>
         <button class="close-btn" id="modal-admin-close">✕</button>
       </div>
-      <div class="admin-body">
 
-        <!-- Crear usuario -->
-        <div class="admin-section">
-          <p class="card-label">NUEVO USUARIO</p>
-          <form id="create-user-form" autocomplete="off" class="create-user-form">
-            <input id="new-username" type="text" placeholder="Usuario" class="import-input" autocomplete="off" />
-            <input id="new-password" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="import-input" autocomplete="new-password" />
-            <button type="submit" class="btn-yellow" id="create-user-btn">➕ Crear usuario</button>
-          </form>
-          <div id="create-user-error" class="login-error hidden" style="margin-top:.5rem"></div>
-          <div id="create-user-ok" class="login-ok hidden" style="margin-top:.5rem"></div>
-        </div>
-
-        <!-- Lista usuarios -->
-        <div class="admin-section">
-          <div class="admin-list-header">
-            <p class="card-label">USUARIOS REGISTRADOS <span id="users-count" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)"></span></p>
-            <button class="btn-outline" id="btn-refresh-users" style="font-size:.72rem;padding:.3rem .65rem">🔄 Actualizar</button>
-          </div>
-          <div id="users-list"></div>
-        </div>
-
+      <!-- Tabs -->
+      <div class="atabs">
+        <button class="atab active" data-atab="users">👥 Usuarios</button>
+        <button class="atab" data-atab="create">➕ Nuevo</button>
+        <button class="atab" data-atab="dashboard">📊 Dashboard</button>
       </div>
+
+      <!-- Panel: Usuarios -->
+      <div class="apanel active" id="apanel-users">
+        <div class="atoolbar">
+          <div class="asearch-wrap">
+            <span class="asearch-icon">🔍</span>
+            <input id="admin-search" type="text" class="asearch-input" placeholder="Buscar usuario…" />
+          </div>
+          <select id="admin-sort" class="asort-sel">
+            <option value="name">A → Z</option>
+            <option value="progress">Mayor progreso</option>
+            <option value="date-desc">Más recientes</option>
+            <option value="date-asc">Más antiguos</option>
+          </select>
+          <span id="admin-user-count" class="acount"></span>
+          <button class="btn-outline" id="btn-refresh-users" style="font-size:.72rem;padding:.3rem .65rem;flex-shrink:0">🔄</button>
+        </div>
+        <div id="admin-users-list" class="ausers-list"></div>
+      </div>
+
+      <!-- Panel: Nuevo usuario -->
+      <div class="apanel" id="apanel-create">
+        <div class="acreate-wrap">
+          <p class="asection-title">Crear nuevo usuario</p>
+          <form id="create-user-form" autocomplete="off" class="acreate-form">
+            <label class="alabel">Nombre de usuario</label>
+            <input id="new-username" type="text" placeholder="ej: juanperez" class="ainput" autocomplete="off" />
+            <label class="alabel">Contraseña</label>
+            <input id="new-password" type="password" placeholder="mínimo 6 caracteres" class="ainput" autocomplete="new-password" />
+            <label class="alabel achecklabel">
+              <input type="checkbox" id="new-is-admin" />
+              <span>Dar permisos de administrador</span>
+            </label>
+            <div id="create-user-error" class="login-error hidden"></div>
+            <div id="create-user-ok"    class="login-ok  hidden"></div>
+            <button type="submit" class="btn-yellow" id="create-user-btn" style="margin-top:.75rem;padding:.65rem;font-size:.88rem">➕ Crear usuario</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Panel: Dashboard -->
+      <div class="apanel" id="apanel-dashboard">
+        <div id="admin-dashboard" class="adash-content"></div>
+      </div>
+
+      <!-- Overlay edición (encima del contenido del modal) -->
+      <div class="aedit-overlay hidden" id="aedit-overlay">
+        <div class="aedit-head">
+          <h3 id="aedit-title">✏️ Editar usuario</h3>
+          <button class="close-btn" id="aedit-close">✕</button>
+        </div>
+        <div class="aedit-body">
+          <label class="alabel">Nombre de usuario</label>
+          <input id="edit-username" type="text" class="ainput" autocomplete="off" />
+
+          <label class="alabel achecklabel" style="margin-top:.9rem">
+            <input type="checkbox" id="edit-is-admin" />
+            <span>Administrador</span>
+          </label>
+
+          <div id="aedit-stats" class="aedit-stats hidden"></div>
+
+          <div id="aedit-error" class="login-error hidden" style="margin-top:.5rem"></div>
+
+          <div class="aedit-actions">
+            <button class="btn-yellow" id="btn-save-edit">💾 Guardar</button>
+            <button class="btn-outline" id="btn-cancel-edit">Cancelar</button>
+          </div>
+
+          <div class="adanger-zone">
+            <p class="adanger-title">⚠️ Zona peligrosa</p>
+            <button class="btn-danger" id="btn-delete-from-edit">🗑 Eliminar este usuario</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 

@@ -322,3 +322,248 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var
 .shared-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
 .shared-country-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
 .shared-country-title{font-size:.85rem;font-weight:700;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem}
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN PANEL v2 — reemplazo completo del mantenedor
+   ══════════════════════════════════════════════════════════ */
+
+/* Modal más ancho para el admin */
+.modal-inner--admin{
+  max-width:700px;
+  position:relative;   /* necesario para el overlay de edición */
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+.atabs{
+  display:flex;
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.atab{
+  flex:1;padding:.65rem .5rem;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--muted);font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:all .18s;
+}
+.atab.active{color:var(--yellow);border-bottom-color:var(--yellow)}
+.atab:hover:not(.active){color:var(--fg);background:rgba(255,255,255,.04)}
+
+/* ── Panels ───────────────────────────────────────────────── */
+.apanel{display:none;flex:1;overflow-y:auto;min-height:0}
+.apanel.active{display:flex;flex-direction:column}
+
+/* ── Toolbar (barra búsqueda + orden) ────────────────────── */
+.atoolbar{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.65rem 1rem;border-bottom:1px solid var(--border);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.asearch-wrap{position:relative;flex:1;min-width:130px}
+.asearch-icon{position:absolute;left:.55rem;top:50%;transform:translateY(-50%);font-size:.78rem;pointer-events:none}
+.asearch-input{
+  width:100%;background:var(--bg4);border:1px solid var(--border);
+  border-radius:7px;color:var(--fg);
+  padding:.38rem .65rem .38rem 1.85rem;
+  font-size:.8rem;outline:none;transition:border-color .2s;
+}
+.asearch-input:focus{border-color:var(--yellow)}
+.asearch-input::placeholder{color:var(--muted)}
+.asort-sel{
+  background:var(--bg4);border:1px solid var(--border);
+  color:var(--fg);border-radius:7px;
+  padding:.38rem .55rem;font-size:.78rem;cursor:pointer;outline:none;
+}
+.acount{font-size:.7rem;color:var(--muted);white-space:nowrap}
+
+/* ── Lista de usuarios ────────────────────────────────────── */
+.ausers-list{
+  padding:.65rem .85rem;
+  display:flex;flex-direction:column;gap:.45rem;
+  overflow-y:auto;flex:1;
+}
+
+/* Card por usuario */
+.auser-card{
+  display:flex;align-items:center;gap:.75rem;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.65rem .85rem;
+  transition:border-color .18s;
+}
+.auser-card:hover{border-color:rgba(255,255,255,.2)}
+.auser-card--me{border-color:rgba(245,197,24,.3)}
+
+/* Avatar circular con iniciales */
+.auser-avatar{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.85rem;color:#fff;
+  flex-shrink:0;letter-spacing:.03em;
+}
+
+/* Info del usuario */
+.auser-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:.2rem}
+.auser-top{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.auser-name{font-size:.88rem;font-weight:700}
+.auser-prog-wrap{display:flex;align-items:center;gap:.5rem}
+.auser-prog-bar{
+  background:var(--bg4);border-radius:99px;
+  height:4px;overflow:hidden;
+  width:100px;flex-shrink:0;
+}
+.auser-prog-fill{height:100%;background:linear-gradient(90deg,var(--yellow2),var(--yellow));border-radius:99px;min-width:2px}
+.auser-prog-text{font-size:.68rem;color:var(--muted);white-space:nowrap}
+.auser-meta{font-size:.67rem;color:var(--muted)}
+
+/* Acciones */
+.auser-actions{display:flex;gap:.35rem;flex-shrink:0}
+.abtn-edit{
+  background:transparent;border:1px solid var(--border);
+  color:var(--fg);border-radius:6px;
+  padding:.28rem .6rem;font-size:.74rem;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.abtn-edit:hover{border-color:var(--yellow);color:var(--yellow)}
+.abtn-del{
+  background:transparent;border:1px solid rgba(248,113,113,.35);
+  color:#f87171;border-radius:6px;
+  padding:.28rem .5rem;font-size:.8rem;cursor:pointer;transition:all .18s;
+}
+.abtn-del:hover{background:rgba(248,113,113,.15)}
+
+/* Badges */
+.admin-badge--me{
+  background:rgba(99,102,241,.3);color:#a5b4fc;
+  font-size:.6rem;font-weight:800;
+  padding:.12rem .42rem;border-radius:99px;letter-spacing:.04em;
+}
+
+/* Estados */
+.auser-loading{padding:2.5rem;text-align:center;color:var(--muted);font-size:.82rem}
+.auser-empty  {padding:2.5rem;text-align:center;color:var(--muted);font-size:.82rem}
+.auser-error  {
+  padding:.9rem 1rem;margin:.6rem;
+  color:#f87171;font-size:.8rem;
+  background:rgba(248,113,113,.08);border-radius:8px;
+}
+
+/* ── Panel Nuevo usuario ──────────────────────────────────── */
+.acreate-wrap{padding:1.25rem 1.5rem;max-width:380px}
+.acreate-form{display:flex;flex-direction:column;gap:.35rem}
+.alabel{
+  font-size:.72rem;font-weight:700;
+  color:var(--muted);letter-spacing:.06em;
+  text-transform:uppercase;margin-top:.4rem;
+}
+.ainput{
+  background:var(--bg4);border:1px solid var(--border);border-radius:8px;
+  color:var(--fg);padding:.55rem .75rem;font-size:.9rem;
+  outline:none;transition:border-color .2s;
+}
+.ainput:focus{border-color:var(--yellow)}
+.ainput::placeholder{color:var(--muted)}
+.achecklabel{
+  display:flex;align-items:center;gap:.5rem;
+  cursor:pointer;color:var(--fg);
+  font-size:.84rem;font-weight:400;
+  letter-spacing:0;text-transform:none;
+  margin-top:.35rem;
+}
+.achecklabel input[type="checkbox"]{
+  width:16px;height:16px;
+  accent-color:var(--yellow);cursor:pointer;
+  flex-shrink:0;
+}
+.asection-title{
+  font-size:.7rem;font-weight:700;color:var(--muted);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+
+/* ── Dashboard ────────────────────────────────────────────── */
+.adash-content{padding:1.1rem;overflow-y:auto}
+.adash-boxes{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;
+  margin-bottom:1.5rem;
+}
+@media(min-width:500px){.adash-boxes{grid-template-columns:repeat(4,1fr)}}
+.adash-box{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.85rem;text-align:center;
+}
+.adash-num  {font-size:1.6rem;font-weight:900;color:var(--yellow);line-height:1}
+.adash-label{font-size:.67rem;color:var(--muted);margin-top:.28rem}
+
+.aranking{display:flex;flex-direction:column;gap:.35rem}
+.arank-row{
+  display:flex;align-items:center;gap:.65rem;
+  background:var(--bg3);border-radius:8px;
+  padding:.48rem .75rem;
+}
+.arank-pos {font-size:.88rem;min-width:1.6rem;text-align:center;font-weight:700}
+.arank-name{
+  font-size:.82rem;font-weight:600;flex:0 0 auto;
+  max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.arank-prog{display:flex;align-items:center;gap:.5rem;flex:1;min-width:0}
+.arank-pct {font-size:.72rem;color:var(--yellow);font-weight:700;white-space:nowrap;min-width:2.5rem;text-align:right}
+
+/* ── Edit overlay (aparece dentro del modal) ──────────────── */
+.aedit-overlay{
+  position:absolute;inset:0;
+  background:var(--bg2);border-radius:var(--radius);
+  display:flex;flex-direction:column;
+  overflow:hidden;z-index:20;
+  animation:aedit-in .2s ease;
+}
+.aedit-overlay.hidden{display:none}
+@keyframes aedit-in{
+  from{opacity:0;transform:translateY(12px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+.aedit-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.25rem;border-bottom:1px solid var(--border);
+  flex-shrink:0;background:var(--bg3);
+}
+.aedit-head h3{font-size:1rem;font-weight:700}
+.aedit-body{
+  padding:1.25rem 1.5rem;
+  overflow-y:auto;flex:1;
+  display:flex;flex-direction:column;gap:.3rem;
+}
+
+/* Stats del usuario en el panel de edición */
+.aedit-stats{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius);padding:.85rem;margin-top:.75rem;
+}
+.aedit-stat-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:.45rem;margin-top:.5rem;
+}
+.aedit-stat{
+  background:var(--bg4);border-radius:8px;padding:.5rem .35rem;text-align:center;
+}
+.aedit-stat strong{display:block;font-size:1rem;font-weight:900;color:var(--yellow)}
+.aedit-stat small{display:block;font-size:.6rem;color:var(--muted);margin-top:.15rem}
+
+/* Botones de edición */
+.aedit-actions{display:flex;gap:.5rem;margin-top:1rem}
+.aedit-actions .btn-yellow,
+.aedit-actions .btn-outline{flex:1;padding:.6rem;font-size:.85rem}
+
+/* Zona peligrosa */
+.adanger-zone{
+  margin-top:auto;padding-top:1.5rem;
+  border-top:1px solid rgba(248,113,113,.2);
+}
+.adanger-title{
+  font-size:.68rem;font-weight:700;color:#f87171;
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem;
+}
+.btn-danger{
+  background:transparent;border:1px solid rgba(248,113,113,.5);
+  color:#f87171;border-radius:8px;
+  padding:.55rem 1rem;font-size:.82rem;
+  cursor:pointer;width:100%;transition:all .2s;
+}
+.btn-danger:hover{background:rgba(248,113,113,.12);border-color:#f87171}

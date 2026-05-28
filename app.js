@@ -102,145 +102,380 @@ function unlockApp(user) {
 }
 
 // ─── Admin panel ──────────────────────────────────────────────────────────────
+let adminUsers   = []
+let adminEditUid = null
+let adminSearch  = ''
+let adminSort    = 'name'
+
 function openAdmin() {
   document.getElementById('modal-admin').classList.remove('hidden')
   document.body.style.overflow = 'hidden'
-  loadUsersList()
+  switchAdminTab('users')
+  loadAdminData()
 }
+
 function closeAdmin() {
   document.getElementById('modal-admin').classList.add('hidden')
   document.body.style.overflow = ''
-  document.getElementById('create-user-error').classList.add('hidden')
-  document.getElementById('new-username').value = ''
-  document.getElementById('new-password').value = ''
+  closeEditUser()
 }
 
-async function loadUsersList() {
-  const listEl  = document.getElementById('users-list')
-  const countEl = document.getElementById('users-count')
-  listEl.innerHTML = `
-    <div class="user-row-loading">
-      <span class="sync-status sync-syncing" style="margin:0">⟳ Cargando usuarios…</span>
-    </div>`
+function switchAdminTab(tabName) {
+  document.querySelectorAll('.atab').forEach(t =>
+    t.classList.toggle('active', t.dataset.atab === tabName)
+  )
+  document.querySelectorAll('.apanel').forEach(p =>
+    p.classList.toggle('active', p.id === 'apanel-' + tabName)
+  )
+  if (tabName === 'dashboard') renderAdminDashboard()
+}
+
+async function loadAdminData() {
+  const listEl = document.getElementById('admin-users-list')
+  if (!listEl) return
+  listEl.innerHTML = `<div class="auser-loading">⟳ Cargando usuarios…</div>`
 
   if (!window.db) {
-    listEl.innerHTML = '<p class="admin-error">⚠️ Firebase no disponible. Recargá la página.</p>'
+    listEl.innerHTML = `<div class="auser-error">⚠️ Firebase no disponible. Recargá la página.</div>`
     return
   }
 
   try {
     const snap = await window.db.collection('users').get()
-    const users = []
-    snap.forEach(d => users.push({ uid: d.id, ...d.data() }))
-    users.sort((a, b) => (a.username || '').localeCompare(b.username || ''))
-
-    if (countEl) countEl.textContent = `${users.length} usuario${users.length !== 1 ? 's' : ''}`
-
-    if (users.length === 0) {
-      listEl.innerHTML = '<p class="admin-empty">No hay usuarios registrados todavía.</p>'
-      return
-    }
-
-    listEl.innerHTML = ''
-    users.forEach(u => {
-      const got  = Object.keys(u.state || {}).filter(k => (u.state[k] || 0) >= 1).length
-      const pct  = Math.round(got / 980 * 100)
-      const date = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'
-      const row  = document.createElement('div')
-      row.className = 'user-row'
-      row.innerHTML = `
-        <div class="user-row-main">
-          <div class="user-row-top">
-            <strong class="user-row-name">👤 ${u.username}</strong>
-            ${u.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
-          </div>
-          <div class="user-row-meta">
-            <span class="user-pct">📊 ${pct}% · ${got} láminas</span>
-            <span class="user-date">📅 ${date}</span>
-          </div>
-        </div>
-        ${!u.isAdmin ? `
-          <div class="user-row-actions">
-            <button class="btn-del-user" data-uid="${u.uid}" data-name="${u.username}" title="Eliminar usuario">🗑 Eliminar</button>
-          </div>` : ''}
-      `
-      listEl.appendChild(row)
-    })
-
-    listEl.querySelectorAll('.btn-del-user').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const name = btn.dataset.name
-        if (!confirm(`¿Eliminar al usuario "${name}"?\nSe borrarán todos sus datos del álbum.`)) return
-        btn.disabled = true; btn.textContent = 'Eliminando…'
-        try {
-          await window.db.collection('users').doc(btn.dataset.uid).delete()
-          loadUsersList()
-        } catch(e) {
-          alert('Error al eliminar: ' + e.message)
-          btn.disabled = false; btn.textContent = '🗑 Eliminar'
-        }
-      })
-    })
-
+    adminUsers = []
+    snap.forEach(d => adminUsers.push({ uid: d.id, ...d.data() }))
+    renderAdminUsers()
+    renderAdminDashboard()
   } catch(e) {
-    console.error('loadUsersList error:', e)
-    listEl.innerHTML = `
-      <p class="admin-error">⚠️ Error al cargar usuarios: ${e.message}</p>
-      <p style="font-size:.72rem;color:var(--muted);margin-top:.4rem">
-        Verificá las reglas de Firestore (deben permitir lectura autenticada).
-      </p>`
+    console.error('loadAdminData error:', e)
+    listEl.innerHTML = `<div class="auser-error">⚠️ Error al cargar: ${e.message}<br><small>Verificá las reglas de Firestore.</small></div>`
   }
 }
 
-async function createUser(username, password) {
+function getFilteredAdminUsers() {
+  let users = [...adminUsers]
+  if (adminSearch) {
+    const q = adminSearch.toLowerCase()
+    users = users.filter(u => (u.username || '').toLowerCase().includes(q))
+  }
+  switch (adminSort) {
+    case 'name':
+      users.sort((a, b) => (a.username || '').localeCompare(b.username || ''))
+      break
+    case 'progress':
+      users.sort((a, b) => {
+        const ga = Object.keys(a.state || {}).filter(k => (a.state[k] || 0) >= 1).length
+        const gb = Object.keys(b.state || {}).filter(k => (b.state[k] || 0) >= 1).length
+        return gb - ga
+      })
+      break
+    case 'date-desc':
+      users.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      break
+    case 'date-asc':
+      users.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
+      break
+  }
+  return users
+}
+
+function renderAdminUsers() {
+  const listEl  = document.getElementById('admin-users-list')
+  const countEl = document.getElementById('admin-user-count')
+  const users   = getFilteredAdminUsers()
+
+  if (countEl) countEl.textContent = `${users.length} usuario${users.length !== 1 ? 's' : ''}`
+
+  if (!users.length) {
+    listEl.innerHTML = adminSearch
+      ? `<div class="auser-empty">Sin resultados para "<em>${adminSearch}</em>"</div>`
+      : `<div class="auser-empty">No hay usuarios registrados.</div>`
+    return
+  }
+
+  listEl.innerHTML = ''
+  users.forEach(u => {
+    const got  = Object.keys(u.state || {}).filter(k => (u.state[k] || 0) >= 1).length
+    const reps = Object.values(u.state || {}).reduce((a, v) => a + Math.max(0, v - 1), 0)
+    const pct  = Math.round(got / 980 * 100)
+    const date = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'
+    const initials = (u.username || '?').slice(0, 2).toUpperCase()
+    const isMe = u.uid === currentUser?.uid
+
+    const card = document.createElement('div')
+    card.className = 'auser-card' + (isMe ? ' auser-card--me' : '')
+    card.innerHTML = `
+      <div class="auser-avatar" style="background:${adminStrToColor(u.username || '')}">
+        ${initials}
+      </div>
+      <div class="auser-info">
+        <div class="auser-top">
+          <span class="auser-name">${u.username || '<sin nombre>'}</span>
+          ${u.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+          ${isMe    ? '<span class="admin-badge--me">Tú</span>' : ''}
+        </div>
+        <div class="auser-prog-wrap">
+          <div class="auser-prog-bar">
+            <div class="auser-prog-fill" style="width:${pct}%"></div>
+          </div>
+          <span class="auser-prog-text">${pct}% · ${got} láminas${reps > 0 ? ` · ↻ ${reps}` : ''}</span>
+        </div>
+        <div class="auser-meta">📅 ${date}</div>
+      </div>
+      <div class="auser-actions">
+        <button class="abtn-edit" data-uid="${u.uid}">✏️ Editar</button>
+        ${!isMe ? `<button class="abtn-del" data-uid="${u.uid}" data-name="${u.username || ''}" title="Eliminar">🗑</button>` : ''}
+      </div>
+    `
+
+    card.querySelector('.abtn-edit').addEventListener('click', () => openEditUser(u.uid))
+    const delBtn = card.querySelector('.abtn-del')
+    if (delBtn) delBtn.addEventListener('click', () => confirmDeleteUser(u.uid, u.username))
+
+    listEl.appendChild(card)
+  })
+}
+
+function adminStrToColor(str) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  const h = Math.abs(hash) % 360
+  return `hsl(${h},50%,32%)`
+}
+
+function renderAdminDashboard() {
+  const el = document.getElementById('admin-dashboard')
+  if (!el) return
+  if (!adminUsers.length) {
+    el.innerHTML = '<div class="auser-empty" style="padding:2rem">Abrí primero la pestaña "Usuarios" para cargar datos.</div>'
+    return
+  }
+
+  const totalGot  = adminUsers.reduce((acc, u) =>
+    acc + Object.keys(u.state || {}).filter(k => (u.state[k] || 0) >= 1).length, 0)
+  const totalReps = adminUsers.reduce((acc, u) =>
+    acc + Object.values(u.state || {}).reduce((a, v) => a + Math.max(0, v - 1), 0), 0)
+  const avgPct    = adminUsers.length
+    ? Math.round(totalGot / (adminUsers.length * 980) * 100) : 0
+  const complete  = typeof ALBUM !== 'undefined'
+    ? adminUsers.reduce((acc, u) =>
+        acc + ALBUM.countries.filter(c =>
+          c.stickers.every(s => (u.state?.[String(s.num)] || 0) >= 1)
+        ).length, 0)
+    : 0
+
+  const ranked = [...adminUsers].sort((a, b) => {
+    const ga = Object.keys(a.state || {}).filter(k => (a.state[k] || 0) >= 1).length
+    const gb = Object.keys(b.state || {}).filter(k => (b.state[k] || 0) >= 1).length
+    return gb - ga
+  })
+
+  el.innerHTML = `
+    <div class="adash-boxes">
+      <div class="adash-box">
+        <div class="adash-num">${adminUsers.length}</div>
+        <div class="adash-label">Usuarios</div>
+      </div>
+      <div class="adash-box">
+        <div class="adash-num">${totalGot.toLocaleString()}</div>
+        <div class="adash-label">Láminas totales</div>
+      </div>
+      <div class="adash-box">
+        <div class="adash-num">${avgPct}%</div>
+        <div class="adash-label">Progreso promedio</div>
+      </div>
+      <div class="adash-box">
+        <div class="adash-num">${totalReps}</div>
+        <div class="adash-label">Repetidas totales</div>
+      </div>
+    </div>
+
+    <p class="asection-title" style="margin-bottom:.65rem">🏆 Ranking de progreso</p>
+    <div class="aranking">
+      ${ranked.map((u, i) => {
+        const got = Object.keys(u.state || {}).filter(k => (u.state[k] || 0) >= 1).length
+        const pct = Math.round(got / 980 * 100)
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)
+        return `
+          <div class="arank-row">
+            <span class="arank-pos">${medal}</span>
+            <span class="arank-name" title="${u.username || '—'}">${u.username || '—'}${u.isAdmin ? ' 🔧' : ''}</span>
+            <div class="arank-prog">
+              <div class="auser-prog-bar" style="flex:1;max-width:none">
+                <div class="auser-prog-fill" style="width:${pct}%"></div>
+              </div>
+              <span class="arank-pct">${pct}%</span>
+            </div>
+          </div>
+        `
+      }).join('')}
+    </div>
+  `
+}
+
+function openEditUser(uid) {
+  adminEditUid = uid
+  const user = adminUsers.find(u => u.uid === uid)
+  if (!user) return
+
+  document.getElementById('aedit-title').textContent   = `✏️ ${user.username || uid}`
+  document.getElementById('edit-username').value       = user.username || ''
+  document.getElementById('edit-is-admin').checked     = !!user.isAdmin
+  document.getElementById('aedit-error').classList.add('hidden')
+
+  const got  = Object.keys(user.state || {}).filter(k => (user.state[k] || 0) >= 1).length
+  const reps = Object.values(user.state || {}).reduce((a, v) => a + Math.max(0, v - 1), 0)
+  const comp = typeof ALBUM !== 'undefined'
+    ? ALBUM.countries.filter(c => c.stickers.every(s => (user.state?.[String(s.num)] || 0) >= 1)).length
+    : 0
+  const pct  = Math.round(got / 980 * 100)
+
+  const statsEl = document.getElementById('aedit-stats')
+  statsEl.innerHTML = `
+    <p class="asection-title">📊 Estadísticas del álbum</p>
+    <div class="aedit-stat-grid">
+      <div class="aedit-stat"><strong>${pct}%</strong><small>Completado</small></div>
+      <div class="aedit-stat"><strong>${got}</strong><small>Tiene</small></div>
+      <div class="aedit-stat"><strong>${980 - got}</strong><small>Faltan</small></div>
+      <div class="aedit-stat"><strong>${reps}</strong><small>Repetidas</small></div>
+      <div class="aedit-stat"><strong>${comp}</strong><small>Países 100%</small></div>
+    </div>
+  `
+  statsEl.classList.remove('hidden')
+
+  document.getElementById('btn-delete-from-edit').style.display =
+    uid === currentUser?.uid ? 'none' : ''
+
+  document.getElementById('aedit-overlay').classList.remove('hidden')
+}
+
+function closeEditUser() {
+  adminEditUid = null
+  const overlay = document.getElementById('aedit-overlay')
+  if (overlay) overlay.classList.add('hidden')
+}
+
+async function saveEditUser() {
+  const errEl   = document.getElementById('aedit-error')
+  const newName = document.getElementById('edit-username').value.trim()
+  const isAdm   = document.getElementById('edit-is-admin').checked
+
+  errEl.classList.add('hidden')
+
+  if (!newName || newName.length < 3) {
+    errEl.textContent = 'El nombre debe tener al menos 3 caracteres'
+    errEl.classList.remove('hidden')
+    return
+  }
+  const dup = adminUsers.find(u => u.uid !== adminEditUid && u.username === newName)
+  if (dup) {
+    errEl.textContent = `El usuario "${newName}" ya existe`
+    errEl.classList.remove('hidden')
+    return
+  }
+
+  const btn = document.getElementById('btn-save-edit')
+  btn.disabled = true; btn.textContent = '⟳ Guardando…'
+
+  try {
+    await window.db.collection('users').doc(adminEditUid).set(
+      { username: newName, isAdmin: isAdm },
+      { merge: true }
+    )
+    const idx = adminUsers.findIndex(u => u.uid === adminEditUid)
+    if (idx !== -1) { adminUsers[idx].username = newName; adminUsers[idx].isAdmin = isAdm }
+
+    if (adminEditUid === currentUser?.uid) {
+      currentUserData = { ...currentUserData, username: newName, isAdmin: isAdm }
+      document.getElementById('navbar-user').textContent = '👤 ' + newName
+      if (!isAdm) document.getElementById('btn-admin-nav').classList.add('hidden')
+    }
+
+    closeEditUser()
+    renderAdminUsers()
+    renderAdminDashboard()
+  } catch(e) {
+    errEl.textContent = 'Error al guardar: ' + e.message
+    errEl.classList.remove('hidden')
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Guardar'
+  }
+}
+
+async function confirmDeleteUser(uid, name) {
+  if (!confirm(`¿Eliminar al usuario "${name}"?\n\nSe borrarán todos sus datos del álbum.\nEsta acción no se puede deshacer.`)) return
+  try {
+    await window.db.collection('users').doc(uid).delete()
+    adminUsers = adminUsers.filter(u => u.uid !== uid)
+    closeEditUser()
+    renderAdminUsers()
+    renderAdminDashboard()
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message)
+  }
+}
+
+async function createUser(username, password, isAdminUser = false) {
   const errEl = document.getElementById('create-user-error')
   errEl.classList.add('hidden')
 
   const uname = username.trim()
-  if (uname.length < 3)  { errEl.textContent = 'Mínimo 3 caracteres para el usuario'; errEl.classList.remove('hidden'); return }
+  if (uname.length < 3)    { errEl.textContent = 'Mínimo 3 caracteres para el usuario';    errEl.classList.remove('hidden'); return }
   if (password.length < 6) { errEl.textContent = 'Mínimo 6 caracteres para la contraseña'; errEl.classList.remove('hidden'); return }
-  if (!window.secondaryAuth) { errEl.textContent = 'Error interno: Firebase Auth no disponible'; errEl.classList.remove('hidden'); return }
+  if (!window.secondaryAuth) { errEl.textContent = 'Error interno: Firebase no disponible'; errEl.classList.remove('hidden'); return }
+
+  if (adminUsers.find(u => u.username === uname)) {
+    errEl.textContent = `El usuario "${uname}" ya existe`
+    errEl.classList.remove('hidden')
+    return
+  }
 
   const btn = document.getElementById('create-user-btn')
   btn.disabled = true; btn.textContent = '⟳ Creando…'
 
   let uid = null
   try {
-    // Paso 1: crear en Firebase Auth (app secundaria para no perder sesión admin)
+    // 1. Crear en Firebase Auth con la app secundaria
     const cred = await window.secondaryAuth.createUserWithEmailAndPassword(toEmail(uname), password)
     uid = cred.user.uid
     await cred.user.updateProfile({ displayName: uname })
 
-    // Paso 2: crear documento en Firestore (usando secondaryDb, autenticado como el nuevo usuario)
+    // 2. Crear doc en Firestore
     const db = window.secondaryDb || window.db
-    await db.collection('users').doc(uid).set({
+    const docData = {
       username: uname,
-      isAdmin: false,
+      isAdmin: isAdminUser,
       state: {},
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
-    })
+    }
+    await db.collection('users').doc(uid).set(docData)
 
-    // Paso 3: cerrar sesión de la app secundaria
+    // 3. Cerrar sesión de la app secundaria
     await window.secondaryAuth.signOut()
 
-    // Limpiar formulario y recargar lista
+    // Limpiar formulario
     document.getElementById('new-username').value = ''
     document.getElementById('new-password').value = ''
+    document.getElementById('new-is-admin').checked = false
     errEl.classList.add('hidden')
 
-    // Mostrar éxito en la lista
-    loadUsersList()
-    // Mostrar badge de éxito temporario
     const okMsg = document.getElementById('create-user-ok')
-    if (okMsg) { okMsg.textContent = `✅ Usuario "${uname}" creado`; okMsg.classList.remove('hidden'); setTimeout(() => okMsg.classList.add('hidden'), 3000) }
+    if (okMsg) {
+      okMsg.textContent = `✅ Usuario "${uname}" creado`
+      okMsg.classList.remove('hidden')
+      setTimeout(() => okMsg.classList.add('hidden'), 3000)
+    }
+
+    // Actualizar caché y vistas
+    adminUsers.push({ uid, ...docData })
+    renderAdminUsers()
+    renderAdminDashboard()
+    switchAdminTab('users')
 
   } catch(e) {
     console.error('createUser error:', e.code, e.message)
-    // Si falló el paso 2 (Firestore), intentar limpiar el usuario de Auth
-    if (uid && e.code !== 'auth/email-already-in-use') {
-      try { await window.secondaryAuth.signOut() } catch(_) {}
-    }
+    if (uid) { try { await window.secondaryAuth.signOut() } catch(_) {} }
     const msgs = {
       'auth/email-already-in-use': `El usuario "${uname}" ya existe`,
       'auth/invalid-email':        'Nombre de usuario inválido (solo letras, números, puntos y guiones)',
@@ -1147,10 +1382,30 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault()
     createUser(
       document.getElementById('new-username').value.trim(),
-      document.getElementById('new-password').value
+      document.getElementById('new-password').value,
+      document.getElementById('new-is-admin').checked
     )
   })
-  document.getElementById('btn-refresh-users').addEventListener('click', loadUsersList)
+  document.getElementById('btn-refresh-users').addEventListener('click', loadAdminData)
+  // Tabs admin
+  document.querySelectorAll('.atab').forEach(tab => {
+    tab.addEventListener('click', () => switchAdminTab(tab.dataset.atab))
+  })
+  // Búsqueda y ordenamiento
+  document.getElementById('admin-search').addEventListener('input', e => {
+    adminSearch = e.target.value; renderAdminUsers()
+  })
+  document.getElementById('admin-sort').addEventListener('change', e => {
+    adminSort = e.target.value; renderAdminUsers()
+  })
+  // Panel de edición
+  document.getElementById('btn-save-edit').addEventListener('click', saveEditUser)
+  document.getElementById('btn-cancel-edit').addEventListener('click', closeEditUser)
+  document.getElementById('aedit-close').addEventListener('click', closeEditUser)
+  document.getElementById('btn-delete-from-edit').addEventListener('click', () => {
+    const user = adminUsers.find(u => u.uid === adminEditUid)
+    if (user) confirmDeleteUser(user.uid, user.username)
+  })
 
   // Logout
   document.getElementById('btn-logout').addEventListener('click', async () => {
