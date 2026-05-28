@@ -13,6 +13,10 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
 
@@ -72,6 +76,7 @@
     <div class="navbar-links">
       <button class="nav-link active">📖 Álbum</button>
     </div>
+    <span class="sync-status" id="sync-status"></span>
     <button class="btn-share" id="btn-share">↗ Compartir</button>
   </nav>
 

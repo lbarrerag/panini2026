@@ -1,4 +1,4 @@
-const CACHE = 'panini2026-v1'
+const CACHE = 'panini2026-v2'
 const ASSETS = [
   '/panini2026/',
   '/panini2026/index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   '/panini2026/favicon.svg',
   '/panini2026/manifest.json',
   '/panini2026/data/stickers.js',
+  '/panini2026/firebase-config.js',
   '/panini2026/icon-192.png',
   '/panini2026/icon-512.png'
 ]

@@ -29,6 +29,64 @@ async function initLogin() {
 
 function unlockApp() {
   document.getElementById('login-overlay').classList.add('hidden')
+  initFirebaseSync()
+}
+
+// ─── Firestore sync ───────────────────────────────────────────────────────────
+function setSyncStatus(status) {
+  const el = document.getElementById('sync-status')
+  if (!el) return
+  const map = {
+    syncing: { text: '⟳ Sincronizando…', cls: 'sync-syncing' },
+    synced:  { text: '✓ Sincronizado',   cls: 'sync-ok'      },
+    error:   { text: '✕ Error',          cls: 'sync-error'   },
+    offline: { text: '○ Sin conexión',   cls: 'sync-offline' }
+  }
+  const s = map[status] || map.offline
+  el.textContent = s.text
+  el.className   = 'sync-status ' + s.cls
+}
+
+function initFirebaseSync() {
+  if (!window.ALBUM_DOC) return
+  setSyncStatus('syncing')
+
+  // 1. Carga estado desde Firestore al abrir la app
+  window.ALBUM_DOC.get()
+    .then(docSnap => {
+      if (docSnap.exists && docSnap.data().state) {
+        const remote = docSnap.data().state
+        // Usar el estado con más láminas registradas (evita perder datos)
+        if (Object.keys(remote).length >= Object.keys(state).length) {
+          state = remote
+          try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch(_) {}
+          renderAll()
+        }
+      }
+      setSyncStatus('synced')
+      setupFirestoreListener()
+    })
+    .catch(() => {
+      setSyncStatus('offline')
+      setupFirestoreListener()
+    })
+}
+
+function setupFirestoreListener() {
+  if (!window.ALBUM_DOC) return
+  // Escucha cambios en tiempo real (sincroniza entre dispositivos)
+  window.ALBUM_DOC.onSnapshot(docSnap => {
+    if (!docSnap.exists) return
+    const remote = docSnap.data().state
+    if (!remote) return
+    // Solo actualiza si hay diferencias (evita loop con nuestros propios guardados)
+    if (JSON.stringify(remote) !== JSON.stringify(state)) {
+      state = remote
+      try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch(_) {}
+      renderAll()
+      setSyncStatus('synced')
+    }
+  }, () => setSyncStatus('offline'))
 }
 
 // ── Vista compartida de repetidas ─────────────────────────────────────────────
@@ -149,7 +207,19 @@ const LS_KEY = 'panini2026_v1'
 
 let state = {}
 try { state = JSON.parse(localStorage.getItem(LS_KEY) || '{}') } catch (_) { state = {} }
-function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch (_) {} }
+let _fbSaveTimer = null
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch (_) {}
+  if (window.ALBUM_DOC) {
+    clearTimeout(_fbSaveTimer)
+    _fbSaveTimer = setTimeout(() => {
+      setSyncStatus('syncing')
+      window.ALBUM_DOC.set({ state, updatedAt: new Date().toISOString() })
+        .then(()  => setSyncStatus('synced'))
+        .catch(() => setSyncStatus('error'))
+    }, 800) // espera 800ms antes de escribir (agrupa cambios rápidos)
+  }
+}
 
 function getS(n)   { return state[String(n)] || 0 }
 function setS(n,v) { if (v===0) delete state[String(n)]; else state[String(n)] = v; save() }
