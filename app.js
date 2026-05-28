@@ -97,9 +97,10 @@ async function loadUsersList() {
   const listEl = document.getElementById('users-list')
   listEl.innerHTML = '<p style="color:var(--muted);font-size:.8rem">Cargando…</p>'
   try {
-    const snap = await window.db.collection('users').orderBy('username').get()
+    const snap = await window.db.collection('users').get()
     const users = []
     snap.forEach(d => users.push({ uid: d.id, ...d.data() }))
+    users.sort((a, b) => (a.username || '').localeCompare(b.username || ''))
     listEl.innerHTML = ''
     users.forEach(u => {
       const got = Object.keys(u.state || {}).filter(k => (u.state[k]||0) >= 1).length
@@ -179,9 +180,11 @@ async function loadFriends() {
   const listEl = document.getElementById('friends-list')
   listEl.innerHTML = '<p style="color:var(--muted);font-size:.8rem">Cargando amigos…</p>'
   try {
-    const snap = await window.db.collection('users').orderBy('username').get()
+    const snap = await window.db.collection('users').get()
     friendsCache = []
-    snap.forEach(d => { if (d.id !== currentUser.uid) friendsCache.push({ uid: d.id, ...d.data() }) })
+    snap.forEach(d => { if (d.id !== currentUser?.uid) friendsCache.push({ uid: d.id, ...d.data() }) })
+    // Ordenar por nombre en el cliente
+    friendsCache.sort((a, b) => (a.username || '').localeCompare(b.username || ''))
 
     listEl.innerHTML = ''
     if (!friendsCache.length) {
