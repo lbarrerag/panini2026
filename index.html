@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="styles.css" />
   <!-- Firebase compat SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
 </head>
@@ -54,9 +55,10 @@
       <div class="login-title">FIFA WORLD CUP</div>
       <div class="login-sub">MI ÁLBUM PANINI 2026™</div>
       <form id="login-form" autocomplete="off">
-        <input id="login-pass" type="password" placeholder="Contraseña" autofocus />
-        <div id="login-error" class="login-error hidden">Contraseña incorrecta</div>
-        <button type="submit" class="btn-yellow">Ingresar</button>
+        <input id="login-user" type="text" placeholder="Usuario" autocomplete="username" autofocus />
+        <input id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password" />
+        <div id="login-error" class="login-error hidden"></div>
+        <button type="submit" class="btn-yellow" id="login-btn">Ingresar</button>
       </form>
     </div>
   </div>
@@ -75,9 +77,13 @@
     </div>
     <div class="navbar-links">
       <button class="nav-link active">📖 Álbum</button>
+      <button class="nav-link hidden" id="btn-friends-nav">👥 Amigos</button>
+      <button class="nav-link hidden" id="btn-admin-nav">⚙️ Admin</button>
     </div>
     <span class="sync-status" id="sync-status"></span>
+    <span class="navbar-user hidden" id="navbar-user"></span>
     <button class="btn-share" id="btn-share">↗ Compartir</button>
+    <button class="btn-logout hidden" id="btn-logout" title="Cerrar sesión">↩ Salir</button>
   </nav>
 
   <!-- ── Layout principal ───────────────────────────── -->
@@ -245,7 +251,42 @@
     </div>
   </div>
 
-  <!-- ── Modal comparar ────────────────────────────── -->
+  <!-- ── Modal amigos ─────────────────────────────── -->
+  <div class="modal hidden" id="modal-friends">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div><h2>👥 Amigos</h2></div>
+        <button class="close-btn" id="modal-friends-close">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:1rem 1.25rem">
+        <div id="friends-comparison" class="hidden"></div>
+        <div id="friends-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal admin ───────────────────────────────── -->
+  <div class="modal hidden" id="modal-admin">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div><h2>⚙️ Panel de administración</h2></div>
+        <button class="close-btn" id="modal-admin-close">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:1rem 1.25rem">
+        <p class="card-label" style="margin-bottom:.75rem">CREAR USUARIO</p>
+        <form id="create-user-form" autocomplete="off" style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.5rem">
+          <input id="new-username" type="text" placeholder="Usuario" class="import-input" autocomplete="off" />
+          <input id="new-password" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="import-input" autocomplete="new-password" />
+          <div id="create-user-error" class="login-error hidden"></div>
+          <button type="submit" class="btn-yellow" id="create-user-btn">➕ Crear usuario</button>
+        </form>
+        <p class="card-label" style="margin-bottom:.75rem">USUARIOS REGISTRADOS</p>
+        <div id="users-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal comparar (legacy código) ───────────── -->
   <div class="modal hidden" id="modal-cmp">
     <div class="modal-inner">
       <div class="modal-head">

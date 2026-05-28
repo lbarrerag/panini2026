@@ -1,4 +1,4 @@
-// ─── Firebase / Firestore sync ────────────────────────────────────────────────
+// ─── Firebase config ──────────────────────────────────────────────────────────
 const _fbConfig = {
   apiKey: "AIzaSyAL0zVyjp7gzlPegcgbYa8L_fmKkXQUInQ",
   authDomain: "album-dd4b8.firebaseapp.com",
@@ -10,8 +10,36 @@ const _fbConfig = {
 
 try {
   firebase.initializeApp(_fbConfig)
-  window.db       = firebase.firestore()
-  window.ALBUM_DOC = window.db.collection('albums').doc('martin')
+  window.db           = firebase.firestore()
+  window.firebaseAuth = firebase.auth()
+  // App secundaria: admin crea usuarios sin perder su propia sesión
+  window.secondaryApp  = firebase.initializeApp(_fbConfig, 'secondary')
+  window.secondaryAuth = window.secondaryApp.auth()
 } catch(e) {
   console.warn('Firebase init error:', e)
 }
+
+// ── Crear cuenta admin en el primer uso ───────────────────────────────────────
+;(async function ensureAdmin() {
+  if (!window.firebaseAuth || !window.db) return
+  if (localStorage.getItem('panini_admin_ok')) return
+  try {
+    const cred = await window.firebaseAuth.createUserWithEmailAndPassword(
+      'mbarrera@panini2026.app', 'Martin.2708'
+    )
+    await cred.user.updateProfile({ displayName: 'mbarrera' })
+    await window.db.collection('users').doc(cred.user.uid).set({
+      username: 'mbarrera',
+      isAdmin: true,
+      state: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    })
+    await window.firebaseAuth.signOut()
+    localStorage.setItem('panini_admin_ok', '1')
+  } catch(e) {
+    if (e.code === 'auth/email-already-in-use') {
+      localStorage.setItem('panini_admin_ok', '1')
+    }
+  }
+})()

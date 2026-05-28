@@ -1,35 +1,286 @@
-// ─── Login ────────────────────────────────────────────────────────────────────
-const PASS_HASH = 'c7768f676c276b2234b19185e5919c9db1d9b905968af5536dcd16a5db9f3910'
-const AUTH_KEY  = 'panini2026_auth'
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+const FAKE_DOMAIN  = '@panini2026.app'
+let currentUser     = null
+let currentUserData = null
 
-async function sha256(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
+function toEmail(u) {
+  return u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + FAKE_DOMAIN
 }
 
-async function initLogin() {
-  // Si hay un link compartido de repetidas, saltear login y mostrar vista compartida
+function setLoginError(msg) {
+  const el = document.getElementById('login-error')
+  el.textContent = msg
+  el.classList.toggle('hidden', !msg)
+}
+
+function initLogin() {
   const repParam = new URLSearchParams(location.search).get('rep')
   if (repParam) { showSharedView(repParam); return }
 
-  if (sessionStorage.getItem(AUTH_KEY) === '1') { unlockApp(); return }
+  if (!window.firebaseAuth) { setLoginError('Error de conexión con Firebase'); return }
+
+  // Detecta sesión existente automáticamente
+  window.firebaseAuth.onAuthStateChanged(async user => {
+    if (user) {
+      await loadUserData(user)
+      unlockApp(user)
+    }
+    // Si no hay usuario, el login-overlay ya está visible por defecto
+  })
+
   document.getElementById('login-form').addEventListener('submit', async e => {
     e.preventDefault()
-    const hash = await sha256(document.getElementById('login-pass').value)
-    if (hash === PASS_HASH) {
-      sessionStorage.setItem(AUTH_KEY, '1')
-      unlockApp()
-    } else {
-      document.getElementById('login-error').classList.remove('hidden')
-      document.getElementById('login-pass').value = ''
-      document.getElementById('login-pass').focus()
+    const username = document.getElementById('login-user').value.trim()
+    const password = document.getElementById('login-pass').value
+    if (!username || !password) { setLoginError('Completá usuario y contraseña'); return }
+
+    const btn = document.getElementById('login-btn')
+    btn.disabled = true; btn.textContent = 'Ingresando…'
+    setLoginError('')
+
+    try {
+      await window.firebaseAuth.signInWithEmailAndPassword(toEmail(username), password)
+      // onAuthStateChanged se encarga del resto
+    } catch(err) {
+      const msg = ['auth/user-not-found','auth/wrong-password','auth/invalid-credential']
+        .includes(err.code) ? 'Usuario o contraseña incorrectos' : 'Error al ingresar. Intentá de nuevo.'
+      setLoginError(msg)
+      btn.disabled = false; btn.textContent = 'Ingresar'
     }
   })
 }
 
-function unlockApp() {
+async function loadUserData(user) {
+  if (!window.db) return
+  try {
+    const snap = await window.db.collection('users').doc(user.uid).get()
+    currentUserData = snap.exists ? snap.data() : null
+    // Si el doc fue eliminado por admin, cerrar sesión
+    if (!snap.exists) { await window.firebaseAuth.signOut(); return }
+  } catch(_) { currentUserData = null }
+}
+
+function unlockApp(user) {
+  currentUser = user
+  window.ALBUM_DOC = window.db ? window.db.collection('users').doc(user.uid) : null
+
   document.getElementById('login-overlay').classList.add('hidden')
+
+  // Nombre en navbar
+  const name = currentUserData?.username || user.displayName || 'Usuario'
+  const userEl = document.getElementById('navbar-user')
+  userEl.textContent = '👤 ' + name
+  userEl.classList.remove('hidden')
+
+  // Botones según rol
+  document.getElementById('btn-logout').classList.remove('hidden')
+  document.getElementById('btn-friends-nav').classList.remove('hidden')
+  if (currentUserData?.isAdmin) {
+    document.getElementById('btn-admin-nav').classList.remove('hidden')
+  }
+
   initFirebaseSync()
+}
+
+// ─── Admin panel ──────────────────────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById('modal-admin').classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+  loadUsersList()
+}
+function closeAdmin() {
+  document.getElementById('modal-admin').classList.add('hidden')
+  document.body.style.overflow = ''
+}
+
+async function loadUsersList() {
+  const listEl = document.getElementById('users-list')
+  listEl.innerHTML = '<p style="color:var(--muted);font-size:.8rem">Cargando…</p>'
+  try {
+    const snap = await window.db.collection('users').orderBy('username').get()
+    const users = []
+    snap.forEach(d => users.push({ uid: d.id, ...d.data() }))
+    listEl.innerHTML = ''
+    users.forEach(u => {
+      const got = Object.keys(u.state || {}).filter(k => (u.state[k]||0) >= 1).length
+      const pct = Math.round(got / 980 * 100)
+      const row = document.createElement('div')
+      row.className = 'user-row'
+      row.innerHTML = `
+        <div class="user-row-info">
+          <strong>${u.username}</strong>
+          ${u.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+          <span class="user-pct">${pct}% · ${got} láminas</span>
+        </div>
+        ${!u.isAdmin ? `<button class="btn-del-user" data-uid="${u.uid}" title="Eliminar">🗑</button>` : ''}
+      `
+      listEl.appendChild(row)
+    })
+    listEl.querySelectorAll('.btn-del-user').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar este usuario? Se borrarán todos sus datos.')) return
+        await window.db.collection('users').doc(btn.dataset.uid).delete()
+        loadUsersList()
+      })
+    })
+  } catch(e) {
+    listEl.innerHTML = '<p style="color:#f87171;font-size:.8rem">Error al cargar usuarios.</p>'
+  }
+}
+
+async function createUser(username, password) {
+  const errEl = document.getElementById('create-user-error')
+  errEl.classList.add('hidden')
+  if (username.length < 3) { errEl.textContent='Mínimo 3 caracteres'; errEl.classList.remove('hidden'); return }
+  if (password.length < 6) { errEl.textContent='Mínimo 6 caracteres para la contraseña'; errEl.classList.remove('hidden'); return }
+
+  const btn = document.getElementById('create-user-btn')
+  btn.disabled = true; btn.textContent = 'Creando…'
+  try {
+    // Usar app secundaria para no perder sesión de admin
+    const cred = await window.secondaryAuth.createUserWithEmailAndPassword(toEmail(username), password)
+    await cred.user.updateProfile({ displayName: username })
+    await window.db.collection('users').doc(cred.user.uid).set({
+      username, isAdmin: false, state: {},
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    })
+    await window.secondaryAuth.signOut()
+    document.getElementById('new-username').value = ''
+    document.getElementById('new-password').value = ''
+    alert(`✅ Usuario "${username}" creado correctamente`)
+    loadUsersList()
+  } catch(e) {
+    errEl.textContent = e.code === 'auth/email-already-in-use'
+      ? 'Ese nombre de usuario ya existe'
+      : 'Error: ' + e.message
+    errEl.classList.remove('hidden')
+  } finally {
+    btn.disabled = false; btn.textContent = '➕ Crear usuario'
+  }
+}
+
+// ─── Amigos / Comparación en tiempo real ─────────────────────────────────────
+let friendsCache  = []
+let friendUnsubs  = []
+
+function openFriends() {
+  document.getElementById('modal-friends').classList.remove('hidden')
+  document.getElementById('friends-comparison').classList.add('hidden')
+  document.body.style.overflow = 'hidden'
+  loadFriends()
+}
+function closeFriends() {
+  document.getElementById('modal-friends').classList.add('hidden')
+  document.body.style.overflow = ''
+  friendUnsubs.forEach(fn => fn()); friendUnsubs = []
+}
+
+async function loadFriends() {
+  const listEl = document.getElementById('friends-list')
+  listEl.innerHTML = '<p style="color:var(--muted);font-size:.8rem">Cargando amigos…</p>'
+  try {
+    const snap = await window.db.collection('users').orderBy('username').get()
+    friendsCache = []
+    snap.forEach(d => { if (d.id !== currentUser.uid) friendsCache.push({ uid: d.id, ...d.data() }) })
+
+    listEl.innerHTML = ''
+    if (!friendsCache.length) {
+      listEl.innerHTML = '<p class="rep-empty">Todavía no hay otros usuarios.</p>'; return
+    }
+    friendsCache.forEach(f => {
+      const allS = getAllStickers()
+      const got  = allS.filter(s => (f.state?.[String(s.num)]||0) >= 1).length
+      const pct  = Math.round(got / 980 * 100)
+      const myRepsForFriend = allS.filter(s => getS(s.num) >= 2 && !(f.state?.[String(s.num)]||0)).length
+      const card = document.createElement('div')
+      card.className = 'friend-card'
+      card.innerHTML = `
+        <div class="friend-info">
+          <span class="friend-name">👤 ${f.username}</span>
+          <span class="friend-pct">${pct}% · ${got} láminas</span>
+          ${myRepsForFriend > 0 ? `<span class="friend-match">🤝 ${myRepsForFriend} coincidencias</span>` : ''}
+        </div>
+        <button class="btn-yellow friend-cmp-btn" data-uid="${f.uid}">🔍 Comparar</button>
+      `
+      listEl.appendChild(card)
+    })
+    listEl.querySelectorAll('.friend-cmp-btn').forEach(btn => {
+      btn.addEventListener('click', () => openFriendComparison(btn.dataset.uid))
+    })
+  } catch(e) {
+    listEl.innerHTML = '<p style="color:#f87171;font-size:.8rem">Error al cargar.</p>'
+  }
+}
+
+function getAllStickers() {
+  return [
+    ...ALBUM.countries.flatMap(c => c.stickers),
+    ...ALBUM.intro, ...ALBUM.history, ...ALBUM.cocacola
+  ]
+}
+
+function openFriendComparison(friendUid) {
+  const cmpEl = document.getElementById('friends-comparison')
+  const listEl = document.getElementById('friends-list')
+
+  const renderCmp = (friend) => {
+    const allS = getAllStickers()
+    const iCanGive    = allS.filter(s => getS(s.num) >= 2 && !(friend.state?.[String(s.num)]||0))
+    const friendGives = allS.filter(s => (friend.state?.[String(s.num)]||0) >= 2 && !getS(s.num))
+
+    const groupByCountry = (stickers) => {
+      const map = {}
+      stickers.forEach(s => {
+        const c = ALBUM.countries.find(c => c.stickers.includes(s))
+        const k = c ? `${c.flag} ${c.name}` : '⭐ Especiales'
+        if (!map[k]) map[k] = []
+        map[k].push(s.code)
+      })
+      return map
+    }
+
+    const renderGroup = (stickers, title, emptyMsg, chipClass) => {
+      if (!stickers.length) return `<div class="cmp-block"><p class="cmp-block-title">${title}</p><p class="compare-empty">${emptyMsg}</p></div>`
+      const groups = groupByCountry(stickers)
+      let html = `<div class="cmp-block"><p class="cmp-block-title">${title} <strong>(${stickers.length})</strong></p>`
+      Object.entries(groups).forEach(([k,codes]) => {
+        html += `<p class="cmp-country-label">${k}</p><div class="compare-chips">`
+        codes.forEach(c => { html += `<span class="${chipClass}">${c}</span>` })
+        html += `</div>`
+      })
+      return html + '</div>'
+    }
+
+    cmpEl.innerHTML = `
+      <div class="cmp-header">
+        <strong>Comparando con ${friend.username}</strong>
+        <button class="btn-outline" id="back-friends">← Volver</button>
+      </div>
+      ${renderGroup(iCanGive,    `✅ Mis repetidas que le faltan a ${friend.username}`,  'No tenés repetidas que le falten.', 'cmp-chip')}
+      ${renderGroup(friendGives, `🎯 Sus repetidas que te faltan a vos`,                 'No tiene repetidas que te falten.', 'rep-chip')}
+    `
+    document.getElementById('back-friends').addEventListener('click', () => {
+      cmpEl.classList.add('hidden')
+      listEl.classList.remove('hidden')
+      friendUnsubs.forEach(fn => fn()); friendUnsubs = []
+    })
+  }
+
+  // Render inicial
+  const friend = friendsCache.find(f => f.uid === friendUid) || { uid: friendUid, username: '…', state: {} }
+  cmpEl.classList.remove('hidden')
+  listEl.classList.add('hidden')
+  renderCmp(friend)
+
+  // Listener en tiempo real sobre el amigo
+  const unsub = window.db.collection('users').doc(friendUid).onSnapshot(snap => {
+    if (!snap.exists) return
+    const updated = { uid: friendUid, ...snap.data() }
+    const idx = friendsCache.findIndex(f => f.uid === friendUid)
+    if (idx !== -1) friendsCache[idx] = updated
+    renderCmp(updated)
+  })
+  friendUnsubs.push(unsub)
 }
 
 // ─── Firestore sync ───────────────────────────────────────────────────────────
@@ -760,8 +1011,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(() => prompt('Copiá este link:', url))
   })
 
-  // Comparar
-  document.getElementById('btn-compare').addEventListener('click', openCompare)
+  // Comparar (legacy)
+  document.getElementById('btn-compare').addEventListener('click', openFriends)
   document.getElementById('modal-cmp-close').addEventListener('click', closeCompare)
   document.getElementById('modal-cmp').addEventListener('click', e => {
     if (e.target === document.getElementById('modal-cmp')) closeCompare()
@@ -782,6 +1033,45 @@ document.addEventListener('DOMContentLoaded', () => {
   })
   document.getElementById('btn-regen-code').addEventListener('click', renderMyCode)
   document.getElementById('btn-compare-run').addEventListener('click', runCompare)
+
+  // Amigos
+  document.getElementById('btn-friends-nav').addEventListener('click', openFriends)
+  document.getElementById('modal-friends-close').addEventListener('click', closeFriends)
+  document.getElementById('modal-friends').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-friends')) closeFriends()
+  })
+
+  // Admin
+  document.getElementById('btn-admin-nav').addEventListener('click', openAdmin)
+  document.getElementById('modal-admin-close').addEventListener('click', closeAdmin)
+  document.getElementById('modal-admin').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-admin')) closeAdmin()
+  })
+  document.getElementById('create-user-form').addEventListener('submit', e => {
+    e.preventDefault()
+    createUser(
+      document.getElementById('new-username').value.trim(),
+      document.getElementById('new-password').value
+    )
+  })
+
+  // Logout
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    if (!confirm('¿Cerrar sesión?')) return
+    await window.firebaseAuth.signOut()
+    currentUser = null; currentUserData = null
+    document.getElementById('navbar-user').classList.add('hidden')
+    document.getElementById('btn-logout').classList.add('hidden')
+    document.getElementById('btn-friends-nav').classList.add('hidden')
+    document.getElementById('btn-admin-nav').classList.add('hidden')
+    document.getElementById('sync-status').textContent = ''
+    document.getElementById('login-overlay').classList.remove('hidden')
+    document.getElementById('login-user').value = ''
+    document.getElementById('login-pass').value = ''
+    document.getElementById('login-btn').disabled = false
+    document.getElementById('login-btn').textContent = 'Ingresar'
+    setLoginError('')
+  })
 })
 
 // ─── Service Worker (PWA) ─────────────────────────────────────────────────────
