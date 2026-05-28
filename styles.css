@@ -254,3 +254,14 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var
 .compare-empty{color:var(--muted);font-size:.82rem}
 .modal-actions-row{display:flex;gap:.5rem;margin-top:.6rem}
 .modal-actions-row .btn-outline,.modal-actions-row .btn-yellow{flex:1}
+
+/* ── Vista compartida (solo lectura) ─────────────────────── */
+#shared-view{min-height:100vh;background:var(--bg)}
+#shared-view.hidden{display:none}
+.shared-container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+.shared-header{margin-bottom:1.5rem;text-align:center}
+.shared-title{font-size:1.15rem;font-weight:800;color:var(--yellow);margin-bottom:.4rem}
+.shared-sub{font-size:.82rem;color:var(--muted)}
+.shared-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.shared-country-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.shared-country-title{font-size:.85rem;font-weight:700;margin-bottom:.6rem;display:flex;align-items:center;gap:.5rem}

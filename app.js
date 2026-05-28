@@ -8,6 +8,10 @@ async function sha256(text) {
 }
 
 async function initLogin() {
+  // Si hay un link compartido de repetidas, saltear login y mostrar vista compartida
+  const repParam = new URLSearchParams(location.search).get('rep')
+  if (repParam) { showSharedView(repParam); return }
+
   if (sessionStorage.getItem(AUTH_KEY) === '1') { unlockApp(); return }
   document.getElementById('login-form').addEventListener('submit', async e => {
     e.preventDefault()
@@ -25,6 +29,117 @@ async function initLogin() {
 
 function unlockApp() {
   document.getElementById('login-overlay').classList.add('hidden')
+}
+
+// ── Vista compartida de repetidas ─────────────────────────────────────────────
+function showSharedView(encoded) {
+  document.getElementById('login-overlay').classList.add('hidden')
+  document.getElementById('shared-view').classList.remove('hidden')
+  // Ocultar el resto de la app
+  document.querySelector('.navbar') && null  // la shared-view tiene su propio navbar
+  document.querySelector('.layout') && document.querySelector('.layout').classList.add('hidden')
+
+  let repData
+  try { repData = JSON.parse(atob(encoded)) } catch(_) {
+    document.getElementById('shared-grid').innerHTML =
+      '<p style="color:#f87171;text-align:center;padding:2rem">Link inválido o expirado.</p>'
+    return
+  }
+
+  const allStickers = [
+    ...ALBUM.countries.flatMap(c => c.stickers),
+    ...ALBUM.intro, ...ALBUM.history, ...ALBUM.cocacola
+  ]
+  const total = Object.values(repData).reduce((a,v) => a + v, 0)
+  const unique = Object.keys(repData).length
+  document.getElementById('shared-sub').textContent =
+    `${unique} tipo${unique!==1?'s':''} de láminas · ${total} copia${total!==1?'s':''} disponibles`
+
+  const grid = document.getElementById('shared-grid')
+  grid.innerHTML = ''
+
+  // Agrupar por país
+  ALBUM.countries.forEach(c => {
+    const reps = c.stickers.filter(s => repData[String(s.num)] > 0)
+    if (!reps.length) return
+    const total = reps.reduce((a, s) => a + repData[String(s.num)], 0)
+
+    const block = document.createElement('div')
+    block.className = 'shared-country-block'
+    block.innerHTML = `
+      <div class="shared-country-title">
+        <span class="flag">${c.flag}</span>
+        <span>${c.name}</span>
+        <span class="rep-badge">↻ ${total}</span>
+      </div>
+      <div class="rep-sticker-list">
+        ${reps.map(s => {
+          const qty = repData[String(s.num)]
+          return `<span class="rep-chip">${s.code}${qty > 1 ? ` <strong>×${qty}</strong>` : ''}</span>`
+        }).join('')}
+      </div>
+    `
+    grid.appendChild(block)
+  })
+
+  // Especiales repetidas
+  const specReps = [...ALBUM.intro, ...ALBUM.history, ...ALBUM.cocacola]
+    .filter(s => repData[String(s.num)] > 0)
+  if (specReps.length) {
+    const total = specReps.reduce((a, s) => a + repData[String(s.num)], 0)
+    const block = document.createElement('div')
+    block.className = 'shared-country-block'
+    block.innerHTML = `
+      <div class="shared-country-title">
+        <span>⭐ Especiales</span>
+        <span class="rep-badge">↻ ${total}</span>
+      </div>
+      <div class="rep-sticker-list">
+        ${specReps.map(s => {
+          const qty = repData[String(s.num)]
+          return `<span class="rep-chip">${s.code}${qty > 1 ? ` <strong>×${qty}</strong>` : ''}</span>`
+        }).join('')}
+      </div>
+    `
+    grid.appendChild(block)
+  }
+
+  if (!grid.children.length) {
+    grid.innerHTML = '<p style="text-align:center;color:var(--muted);padding:3rem">No hay repetidas disponibles aún.</p>'
+  }
+
+  // Botón copiar lista
+  document.getElementById('btn-copy-shared').addEventListener('click', () => {
+    const lines = []
+    ALBUM.countries.forEach(c => {
+      const reps = c.stickers.filter(s => repData[String(s.num)] > 0)
+      if (!reps.length) return
+      lines.push(`\n=== ${c.flag} ${c.name} ===`)
+      reps.forEach(s => {
+        const qty = repData[String(s.num)]
+        lines.push(`  ${s.code} · Nº${s.num}${qty > 1 ? ` (×${qty})` : ''}`)
+      })
+    })
+    navigator.clipboard.writeText(lines.join('\n').trim())
+      .then(() => alert('✅ Lista copiada al portapapeles'))
+      .catch(() => alert('No se pudo copiar.'))
+  })
+}
+
+// ── Generar link compartible de repetidas ─────────────────────────────────────
+function buildShareRepURL() {
+  const allStickers = [
+    ...ALBUM.countries.flatMap(c => c.stickers),
+    ...ALBUM.intro, ...ALBUM.history, ...ALBUM.cocacola
+  ]
+  const repData = {}
+  allStickers.forEach(s => {
+    const v = getS(s.num)
+    if (v >= 2) repData[String(s.num)] = v - 1
+  })
+  const encoded = btoa(JSON.stringify(repData))
+  const base = location.origin + location.pathname
+  return `${base}?rep=${encoded}`
 }
 
 initLogin()
@@ -566,6 +681,13 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.clipboard.writeText(buildRepList())
       .then(() => alert('✅ Lista de repetidas copiada'))
       .catch(() => alert('No se pudo copiar.'))
+  })
+
+  document.getElementById('btn-share-rep').addEventListener('click', () => {
+    const url = buildShareRepURL()
+    navigator.clipboard.writeText(url)
+      .then(() => alert('✅ Link copiado al portapapeles\n\nTus amigos pueden abrirlo sin necesidad de contraseña.'))
+      .catch(() => prompt('Copiá este link:', url))
   })
 
   // Comparar

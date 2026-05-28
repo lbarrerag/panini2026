@@ -16,6 +16,30 @@
 </head>
 <body>
 
+  <!-- ── Vista compartida (solo repetidas) ────────────── -->
+  <div id="shared-view" class="hidden">
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <div class="brand-logo">
+          <span class="brand-26">26</span>
+          <span class="brand-trophy">🏆</span>
+        </div>
+        <div>
+          <div class="brand-title">FIFA WORLD CUP</div>
+          <div class="brand-sub">REPETIDAS DISPONIBLES 2026™</div>
+        </div>
+      </div>
+      <button class="btn-share" id="btn-copy-shared">📋 Copiar lista</button>
+    </nav>
+    <div class="shared-container">
+      <div class="shared-header">
+        <h2 class="shared-title">🔄 Láminas disponibles para intercambio</h2>
+        <p class="shared-sub" id="shared-sub"></p>
+      </div>
+      <div id="shared-grid" class="shared-grid"></div>
+    </div>
+  </div>
+
   <!-- ── Login overlay ─────────────────────────────────── -->
   <div id="login-overlay">
     <div class="login-box">
@@ -208,6 +232,7 @@
         </div>
         <div style="display:flex;gap:.5rem;align-items:center">
           <button class="btn-outline" id="btn-copy-rep" style="white-space:nowrap;font-size:.72rem">📋 Copiar lista</button>
+          <button class="btn-yellow" id="btn-share-rep" style="white-space:nowrap;font-size:.72rem">🔗 Compartir link</button>
           <button class="close-btn" id="modal-rep-close">✕</button>
         </div>
       </div>
