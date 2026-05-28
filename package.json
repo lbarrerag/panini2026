@@ -1,0 +1,17 @@
+{
+	"name": "panini2026",
+	"version": "1.0.0",
+	"description": "Álbum Panini FIFA Mundial 2026 — seguimiento de láminas",
+	"scripts": {
+		"start": "npx --yes http-server . -p 3000 -o",
+		"dev": "npx --yes http-server . -p 3000 -o"
+	},
+	"keywords": [
+		"panini",
+		"fifa",
+		"mundial",
+		"2026",
+		"album"
+	],
+	"license": "MIT"
+}

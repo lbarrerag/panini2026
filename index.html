@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Álbum Panini — FIFA Mundial 2026</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="brand-logo">
+        <span class="brand-26">26</span>
+        <span class="brand-trophy">🏆</span>
+      </div>
+      <div>
+        <div class="brand-title">FIFA WORLD CUP</div>
+        <div class="brand-sub">MI ÁLBUM PANINI 2026™</div>
+      </div>
+    </div>
+    <div class="navbar-links">
+      <button class="nav-link active">📖 Álbum</button>
+    </div>
+    <button class="btn-share" id="btn-share">↗ Compartir</button>
+  </nav>
+
+  <!-- ── Layout principal ───────────────────────────── -->
+  <div class="layout">
+
+    <!-- ── Sidebar ──────────────────────────────────── -->
+    <aside class="sidebar">
+
+      <!-- Cuenta regresiva -->
+      <div class="card countdown-card">
+        <div class="card-label">⏱ FALTAN PARA EL MUNDIAL</div>
+        <div class="countdown-grid">
+          <div class="cd-unit"><span id="cd-days">00</span><small>días</small></div>
+          <div class="cd-unit"><span id="cd-hrs">00</span><small>hrs</small></div>
+          <div class="cd-unit"><span id="cd-min">00</span><small>min</small></div>
+          <div class="cd-unit"><span id="cd-sec">00</span><small>seg</small></div>
+        </div>
+        <div class="cd-info">11 Jun 2026 · Estadio Azteca · México</div>
+      </div>
+
+      <!-- Stats del álbum -->
+      <div class="card album-card">
+        <div class="card-label">📒 MI ÁLBUM</div>
+        <div class="big-pct"><span id="pct-num">0</span>%</div>
+        <div class="pct-label">completado</div>
+        <div class="prog-global"><div id="prog-bar" style="width:0%"></div></div>
+
+        <div class="stats-row">
+          <div class="stat got"><span class="stat-icon">✓</span><strong id="cnt-got">0</strong><small>Tengo</small></div>
+          <div class="stat miss"><strong id="cnt-miss">0</strong><small>Faltan</small></div>
+          <div class="stat rep"><span class="stat-icon">↻</span><strong id="cnt-rep">0</strong><small>Extras</small></div>
+        </div>
+        <div class="stats-note">980 stickers totales en el álbum</div>
+        <div class="stats-note" style="margin-bottom:.75rem">Lista de <span id="cnt-miss2">0</span> stickers faltantes:</div>
+
+        <div class="actions-col">
+          <button class="btn-outline" id="btn-copy">📋 Copiar lista</button>
+          <button class="btn-yellow" id="btn-dl">⬇ Descargar TXT</button>
+        </div>
+      </div>
+
+      <!-- Especiales -->
+      <div class="card specials-card">
+        <div class="specials-header">
+          <span>⭐ Stickers Especiales</span>
+          <span id="spec-info" class="spec-info"></span>
+        </div>
+        <button class="btn-outline full" id="btn-specials">Ver especiales</button>
+      </div>
+
+      <!-- Estadísticas y Repetidas -->
+      <div class="card" style="display:flex;flex-direction:column;gap:.5rem">
+        <button class="btn-outline full" id="btn-stats">📊 Estadísticas detalladas</button>
+        <button class="btn-outline full" id="btn-repeated">🔄 Mis repetidas</button>
+        <button class="btn-outline full" id="btn-compare">👥 Comparar con amigos</button>
+      </div>
+
+      <!-- Reset -->
+      <button class="btn-reset" id="btn-reset">↺ Resetear álbum</button>
+    </aside>
+
+    <!-- ── Contenido principal ───────────────────────── -->
+    <main class="main-content">
+      <h1 class="album-title">ÁLBUM PANINI</h1>
+      <p class="album-sub">FIFA World Cup 2026™ · 48 selecciones · 980 stickers</p>
+
+      <!-- Filtros -->
+      <div class="filters">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-box" id="search" type="text" placeholder="Buscar país..." />
+        </div>
+        <div class="filter-status" id="filter-status">
+          <button class="fs-btn active" data-status="ALL">Todos</button>
+          <button class="fs-btn" data-status="progress">▶ En progreso</button>
+          <button class="fs-btn" data-status="complete">✓ Completos</button>
+          <button class="fs-btn" data-status="empty">○ Sin empezar</button>
+        </div>
+        <select class="filter-conf" id="filter-conf">
+          <option value="ALL">Todas las conf.</option>
+          <option value="UEFA">UEFA</option>
+          <option value="CONMEBOL">CONMEBOL</option>
+          <option value="CONCACAF">CONCACAF</option>
+          <option value="CAF">CAF</option>
+          <option value="AFC">AFC</option>
+          <option value="OFC">OFC</option>
+        </select>
+      </div>
+
+      <!-- Nav grupos -->
+      <div id="group-nav" class="group-nav"></div>
+
+      <!-- Grid de países -->
+      <div id="grid" class="grid"></div>
+    </main>
+  </div>
+
+  <!-- ── Modal stickers país ────────────────────────── -->
+  <div class="modal hidden" id="modal">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div>
+          <h2 id="modal-title"></h2>
+          <p class="modal-sub" id="modal-sub"></p>
+        </div>
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span class="modal-counter" id="modal-counter"></span>
+          <button class="close-btn" id="modal-close">✕</button>
+        </div>
+      </div>
+      <p class="hint">🖱 Clic = agregar copia · Clic derecho = resetear a 0 · El número en la esquina indica cuántas tienes</p>
+      <div id="modal-grid" class="modal-grid"></div>
+    </div>
+  </div>
+
+  <!-- ── Modal especiales ───────────────────────────── -->
+  <div class="modal hidden" id="modal-spec">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div><h2>⭐ Stickers Especiales</h2></div>
+        <button class="close-btn" id="modal-spec-close">✕</button>
+      </div>
+      <p class="hint">🖱 Clic = agregar copia · Clic derecho = resetear · Número en esquina = copias totales</p>
+      <div id="modal-spec-grid" class="modal-grid"></div>
+    </div>
+  </div>
+
+  <script src="data/stickers.js"></script>
+  <script src="app.js"></script>
+
+  <!-- ── Modal estadísticas ────────────────────────── -->
+  <div class="modal hidden" id="modal-stats">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div><h2>📊 Estadísticas del álbum</h2></div>
+        <button class="close-btn" id="modal-stats-close">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:1rem 1.25rem">
+        <div class="stats-summary" id="ss-boxes"></div>
+        <table class="stats-table">
+          <thead><tr>
+            <th>Selección</th><th>Grupo</th><th>Progreso</th><th>Répetidas</th>
+          </tr></thead>
+          <tbody id="stats-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal repetidas ───────────────────────────── -->
+  <div class="modal hidden" id="modal-rep">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div>
+          <h2>🔄 Mis repetidas</h2>
+          <p class="modal-sub" id="rep-total-text"></p>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button class="btn-outline" id="btn-copy-rep" style="white-space:nowrap;font-size:.72rem">📋 Copiar lista</button>
+          <button class="close-btn" id="modal-rep-close">✕</button>
+        </div>
+      </div>
+      <div style="overflow-y:auto;padding:1rem 1.25rem" id="rep-content"></div>
+    </div>
+  </div>
+
+  <!-- ── Modal comparar ────────────────────────────── -->
+  <div class="modal hidden" id="modal-cmp">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <div><h2>👥 Comparar con amigos</h2></div>
+        <button class="close-btn" id="modal-cmp-close">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:1rem 1.25rem">
+        <div class="modal-tabs">
+          <button class="modal-tab active" data-tab="export">📤 Mi código</button>
+          <button class="modal-tab" data-tab="import">📥 Código de amigo</button>
+        </div>
+        <div class="tab-panel active" id="tab-export">
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem">
+            Comparte este código con tu amigo para que vea qué láminas tuyas le faltan:
+          </p>
+          <div class="code-box" id="my-code-box"></div>
+          <div class="modal-actions-row">
+            <button class="btn-outline" id="btn-copy-code">📋 Copiar código</button>
+            <button class="btn-yellow" id="btn-regen-code">🔄 Regenerar</button>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-import">
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem">
+            Pega el código de tu amigo para ver qué repetidas tuyas necesita:
+          </p>
+          <input class="import-input" id="friend-code-input" placeholder="Pega el código de tu amigo aquí..." />
+          <button class="btn-yellow" id="btn-compare-run" style="width:100%;margin-top:.4rem">🔍 Comparar</button>
+          <div class="compare-result hidden" id="compare-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

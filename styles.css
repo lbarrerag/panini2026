@@ -1,0 +1,240 @@
+:root {
+  --bg:      #0a0f1e;
+  --bg2:     #0f1628;
+  --bg3:     #141d35;
+  --bg4:     #1a2540;
+  --border:  rgba(255,255,255,0.08);
+  --fg:      #e8f0fc;
+  --muted:   #6b85b0;
+  --yellow:  #f5c518;
+  --yellow2: #e6a800;
+  --got:     #16a34a;
+  --rep:     #c2410c;
+  --empty:   #1e3058;
+  --radius:  10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);min-height:100vh}
+
+/* ── Navbar ─────────────────────────────────────────── */
+.navbar{background:#0c1322;border-bottom:1px solid var(--border);padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.5rem;position:sticky;top:0;z-index:50}
+.navbar-brand{display:flex;align-items:center;gap:.75rem}
+
+/* Logo estilo FIFA 2026 */
+.brand-logo{
+  position:relative;width:44px;height:44px;
+  background:#000;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:visible;
+  box-shadow:0 2px 10px rgba(0,0,0,.6);
+}
+.brand-26{
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:1.35rem;font-weight:900;color:#fff;
+  letter-spacing:-.04em;line-height:1;
+  position:absolute;
+}
+.brand-trophy{
+  font-size:1.5rem;position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-54%);
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));
+}
+.brand-title{font-size:.88rem;font-weight:900;color:var(--yellow);letter-spacing:.06em}
+.brand-sub{font-size:.6rem;color:var(--muted);letter-spacing:.1em}
+.navbar-links{flex:1;display:flex;gap:.5rem}
+.nav-link{background:var(--yellow);color:#000;border:none;border-radius:6px;padding:.38rem .9rem;font-size:.85rem;font-weight:700;cursor:pointer}
+.btn-share{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:.38rem .85rem;font-size:.82rem;cursor:pointer;transition:background .2s}
+.btn-share:hover{background:var(--bg3)}
+
+/* ── Layout ─────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:1.25rem;max-width:1300px;margin:1.25rem auto;padding:0 1.25rem}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{order:2}}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar{display:flex;flex-direction:column;gap:.85rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.card-label{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.1em;margin-bottom:.75rem}
+
+/* Countdown */
+.countdown-card{}
+.countdown-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.6rem}
+.cd-unit{background:var(--bg3);border-radius:6px;text-align:center;padding:.5rem .25rem}
+.cd-unit span{display:block;font-size:1.6rem;font-weight:900;color:var(--fg);line-height:1}
+.cd-unit small{font-size:.6rem;color:var(--muted);letter-spacing:.05em}
+.cd-info{font-size:.72rem;color:var(--muted);text-align:center}
+
+/* Album card */
+.album-card{}
+.big-pct{font-size:2.8rem;font-weight:900;color:var(--yellow);text-align:center;line-height:1;margin:.25rem 0}
+.pct-label{font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:.65rem}
+.prog-global{background:var(--bg4);border-radius:99px;height:8px;overflow:hidden;margin-bottom:.9rem}
+#prog-bar{height:100%;background:linear-gradient(90deg,var(--yellow2),var(--yellow));border-radius:99px;transition:width .4s}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.6rem}
+.stat{background:var(--bg3);border-radius:8px;padding:.6rem .4rem;text-align:center}
+.stat strong{display:block;font-size:1.25rem;font-weight:800}
+.stat small{font-size:.68rem;color:var(--muted)}
+.stat-icon{font-size:.7rem;display:block;margin-bottom:.1rem}
+.stat.got strong{color:#4ade80}
+.stat.miss strong{color:#f87171}
+.stat.rep strong{color:#fb923c}
+.stats-note{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:.25rem}
+.actions-col{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:.45rem .5rem;font-size:.75rem;cursor:pointer;transition:background .2s;white-space:nowrap}
+.btn-outline:hover{background:var(--bg4)}
+.btn-outline.full{grid-column:1/-1;width:100%}
+.btn-yellow{background:var(--yellow);color:#000;border:none;border-radius:6px;padding:.45rem .5rem;font-size:.75rem;font-weight:700;cursor:pointer;transition:filter .2s}
+.btn-yellow:hover{filter:brightness(1.1)}
+
+/* Specials */
+.specials-card{}
+.specials-header{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;margin-bottom:.65rem}
+.spec-info{font-size:.72rem;color:var(--muted)}
+
+/* Reset */
+.btn-reset{background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:6px;padding:.5rem;font-size:.78rem;cursor:pointer;transition:background .2s;text-align:center}
+.btn-reset:hover{background:rgba(239,68,68,.1)}
+
+/* ── Main content ────────────────────────────────────── */
+.main-content{min-width:0}
+.album-title{font-size:1.8rem;font-weight:900;letter-spacing:.04em;margin-bottom:.2rem}
+.album-sub{font-size:.82rem;color:var(--muted);margin-bottom:1rem}
+
+/* Filtros */
+.filters{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.75rem}
+.search-wrap{position:relative;flex-shrink:0}
+.search-icon{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none}
+.search-box{padding:.4rem .75rem .4rem 2rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--fg);font-size:.82rem;width:180px}
+.search-box::placeholder{color:var(--muted)}
+.filter-status{display:flex;gap:.3rem;flex-wrap:wrap}
+.fs-btn{padding:.35rem .7rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .18s;white-space:nowrap}
+.fs-btn:hover{border-color:var(--yellow);color:var(--yellow)}
+.fs-btn.active{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700}
+.filter-conf{background:var(--bg2);border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:.38rem .65rem;font-size:.78rem;cursor:pointer}
+
+/* Nav grupos */
+.group-nav{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.9rem}
+.nav-btn{padding:.28rem .55rem;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.75rem;cursor:pointer;transition:all .18s}
+.nav-btn:hover,.nav-btn.active{background:var(--bg3);color:var(--fg);border-color:var(--fg)}
+
+/* Grid países */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.7rem}
+.country-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.85rem;cursor:pointer;transition:border-color .18s,transform .15s}
+.country-card:hover{border-color:var(--yellow);transform:translateY(-2px)}
+.card-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.flag{font-size:1.5rem;line-height:1;flex-shrink:0}
+.country-name{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-badge{display:inline-block;font-size:.62rem;font-weight:700;padding:.1rem .35rem;border-radius:99px;margin-top:.15rem;color:#fff}
+.card-progress{margin-bottom:.35rem}
+.prog-wrap{background:var(--bg4);border-radius:99px;height:4px;overflow:hidden;margin-bottom:.3rem}
+.prog-fill{height:100%;background:linear-gradient(90deg,#f5c518,#fde68a);border-radius:99px;transition:width .3s;min-width:2px}
+.card-stats{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)}
+.card-pct{font-weight:700;color:var(--yellow)}
+.empty-msg{color:var(--muted);padding:2rem;text-align:center;grid-column:1/-1}
+
+/* Colores de badge por grupo */
+.gb-A{background:#6d28d9}.gb-B{background:#1d4ed8}.gb-C{background:#0f766e}
+.gb-D{background:#b45309}.gb-E{background:#be185d}.gb-F{background:#0369a1}
+.gb-G{background:#15803d}.gb-H{background:#7c3aed}.gb-I{background:#c2410c}
+.gb-J{background:#0e7490}.gb-K{background:#a16207}.gb-L{background:#be123c}
+
+/* ── Modal ───────────────────────────────────────────── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal.hidden{display:none}
+.modal-inner{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-head h2{font-size:1.05rem;font-weight:700}
+.modal-sub{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.modal-counter{font-size:.85rem;color:var(--yellow);font-weight:700}
+.close-btn{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:0 .2rem;line-height:1}
+.close-btn:hover{color:var(--fg)}
+.hint{font-size:.72rem;color:var(--muted);padding:.45rem 1.25rem;flex-shrink:0}
+.modal-grid{overflow-y:auto;padding:.75rem 1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.55rem}
+
+/* Sticker tile */
+.sticker{background:var(--empty);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .45rem;text-align:center;cursor:pointer;transition:transform .12s,border-color .15s,background .15s;user-select:none}
+.sticker:hover{transform:scale(1.04);border-color:var(--yellow)}
+.sticker.got{background:#052e16;border-color:#16a34a}
+.sticker.rep{background:#431407;border-color:#c2410c}
+.st-num{font-size:.62rem;color:var(--muted);margin-bottom:.1rem}
+.st-code{font-size:.72rem;font-weight:700;margin-bottom:.18rem}
+.st-icon{font-size:1.1rem;margin:.12rem 0}
+.st-label{font-size:.66rem;color:var(--muted);min-height:1.8rem;line-height:1.3;margin-bottom:.25rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-clamp:2}
+.st-state{font-size:.65rem;font-weight:600;color:#60a5fa}
+.sticker.got .st-state{color:#4ade80}
+.sticker.rep .st-state{color:#fb923c}
+
+/* ── Badge numérico repetidas en sticker ─────────────── */
+.st-rep-badge{
+  position:absolute;top:-7px;right:-7px;
+  min-width:22px;height:22px;
+  background:#c2410c;color:#fff;
+  border-radius:99px;font-size:.68rem;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg2);padding:0 4px;
+  box-shadow:0 2px 6px rgba(0,0,0,.5);
+  z-index:2;line-height:1;
+}
+.sticker{ position:relative; }
+
+/* ── Animación stamp ──────────────────────────────────── */
+@keyframes stamp {
+  0%   { transform:scale(1.35) rotate(-6deg); opacity:.6; }
+  55%  { transform:scale(.93)  rotate(2deg);  opacity:1; }
+  100% { transform:scale(1)    rotate(0deg);  opacity:1; }
+}
+@keyframes stamp-rep {
+  0%   { transform:scale(1.35) rotate(6deg);  opacity:.6; }
+  55%  { transform:scale(.93)  rotate(-2deg); opacity:1; }
+  100% { transform:scale(1)    rotate(0deg);  opacity:1; }
+}
+.sticker.stamp-got { animation:stamp     .32s cubic-bezier(.22,.61,.36,1) both; }
+.sticker.stamp-rep { animation:stamp-rep .32s cubic-bezier(.22,.61,.36,1) both; }
+
+/* ── Badge repetidas en country card ─────────────────── */
+.rep-badge{display:inline-flex;align-items:center;gap:.2rem;font-size:.62rem;font-weight:700;
+  color:#fb923c;background:rgba(194,65,12,.18);border-radius:99px;padding:.1rem .38rem;margin-left:.3rem}
+
+/* ── Modal estadísticas ───────────────────────────────── */
+.stats-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+.ss-box{background:var(--bg3);border-radius:8px;padding:.7rem;text-align:center}
+.ss-box strong{display:block;font-size:1.5rem;font-weight:900;color:var(--yellow)}
+.ss-box small{font-size:.68rem;color:var(--muted)}
+.stats-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.stats-table th{text-align:left;color:var(--muted);font-size:.67rem;letter-spacing:.06em;
+  padding:.4rem .5rem;border-bottom:1px solid var(--border)}
+.stats-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.stats-table tr:hover td{background:var(--bg3)}
+.mini-bar-wrap{background:var(--bg4);border-radius:99px;height:5px;width:80px;overflow:hidden;
+  display:inline-block;vertical-align:middle;margin-left:.4rem}
+.mini-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--yellow2),var(--yellow))}
+.pct-cell{color:var(--yellow);font-weight:700}
+.complete-row td{color:#4ade80}
+
+/* ── Modal repetidas ─────────────────────────────────── */
+.rep-country-block{margin-bottom:1rem}
+.rep-country-title{font-size:.83rem;font-weight:700;margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem}
+.rep-sticker-list{display:flex;flex-wrap:wrap;gap:.35rem}
+.rep-chip{background:rgba(194,65,12,.2);border:1px solid rgba(194,65,12,.45);color:#fb923c;
+  border-radius:6px;padding:.22rem .52rem;font-size:.72rem;font-weight:600}
+.rep-empty{color:var(--muted);font-size:.82rem;padding:1rem 0}
+
+/* ── Comparar / Compartir modal ───────────────────────── */
+.modal-tabs{display:flex;gap:.4rem;margin-bottom:1rem}
+.modal-tab{flex:1;padding:.4rem;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:.78rem;cursor:pointer;transition:all .15s}
+.modal-tab.active{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.code-box{background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:.5rem .7rem;
+  font-size:.68rem;color:var(--muted);word-break:break-all;max-height:72px;overflow-y:auto;font-family:monospace;margin:.4rem 0}
+.import-input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;
+  color:var(--fg);padding:.45rem .7rem;font-size:.78rem;font-family:monospace;margin:.4rem 0}
+.import-input::placeholder{color:var(--muted)}
+.compare-result{margin-top:.75rem}
+.compare-result h4{font-size:.82rem;font-weight:700;margin-bottom:.5rem;color:var(--yellow)}
+.compare-chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem}
+.cmp-chip{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:#4ade80;
+  border-radius:6px;padding:.22rem .52rem;font-size:.72rem;font-weight:600}
+.compare-empty{color:var(--muted);font-size:.82rem}
+.modal-actions-row{display:flex;gap:.5rem;margin-top:.6rem}
+.modal-actions-row .btn-outline,.modal-actions-row .btn-yellow{flex:1}
