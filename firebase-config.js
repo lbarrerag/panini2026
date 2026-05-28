@@ -15,27 +15,29 @@ try {
   // App secundaria: admin crea usuarios sin perder su propia sesión
   window.secondaryApp  = firebase.initializeApp(_fbConfig, 'secondary')
   window.secondaryAuth = window.secondaryApp.auth()
+  window.secondaryDb   = window.secondaryApp.firestore()
 } catch(e) {
   console.warn('Firebase init error:', e)
 }
 
 // ── Crear cuenta admin en el primer uso ───────────────────────────────────────
 ;(async function ensureAdmin() {
-  if (!window.firebaseAuth || !window.db) return
+  // Usa la app secundaria para no interferir con onAuthStateChanged de la app principal
+  if (!window.secondaryAuth || !window.secondaryDb) return
   if (localStorage.getItem('panini_admin_ok')) return
   try {
-    const cred = await window.firebaseAuth.createUserWithEmailAndPassword(
+    const cred = await window.secondaryAuth.createUserWithEmailAndPassword(
       'mbarrera@panini2026.app', 'Martin.2708'
     )
     await cred.user.updateProfile({ displayName: 'mbarrera' })
-    await window.db.collection('users').doc(cred.user.uid).set({
+    await window.secondaryDb.collection('users').doc(cred.user.uid).set({
       username: 'mbarrera',
       isAdmin: true,
       state: {},
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
-    await window.firebaseAuth.signOut()
+    await window.secondaryAuth.signOut()
     localStorage.setItem('panini_admin_ok', '1')
   } catch(e) {
     if (e.code === 'auth/email-already-in-use') {

@@ -54,9 +54,28 @@ async function loadUserData(user) {
   if (!window.db) return
   try {
     const snap = await window.db.collection('users').doc(user.uid).get()
-    currentUserData = snap.exists ? snap.data() : null
-    // Si el doc fue eliminado por admin, cerrar sesión
-    if (!snap.exists) { await window.firebaseAuth.signOut(); return }
+    if (!snap.exists) {
+      // Doc eliminado o usuario nuevo — recrear con datos de Auth
+      const uname = user.displayName || user.email.split('@')[0]
+      const isAdm  = user.email === 'mbarrera@panini2026.app'
+      const docData = {
+        username: uname, isAdmin: isAdm, state: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      try { await window.db.collection('users').doc(user.uid).set(docData) } catch(_) {}
+      currentUserData = docData
+    } else {
+      currentUserData = snap.data()
+      // Reparar: si el doc fue sobreescrito por el bug de save() sin merge
+      if (!currentUserData.username) {
+        const uname = user.displayName || user.email.split('@')[0]
+        const isAdm  = user.email === 'mbarrera@panini2026.app'
+        const repairs = { username: uname, isAdmin: isAdm }
+        try { await window.db.collection('users').doc(user.uid).set(repairs, { merge: true }) } catch(_) {}
+        currentUserData = { ...currentUserData, ...repairs }
+      }
+    }
   } catch(_) { currentUserData = null }
 }
 
@@ -192,8 +211,9 @@ async function createUser(username, password) {
     uid = cred.user.uid
     await cred.user.updateProfile({ displayName: uname })
 
-    // Paso 2: crear documento en Firestore
-    await window.db.collection('users').doc(uid).set({
+    // Paso 2: crear documento en Firestore (usando secondaryDb, autenticado como el nuevo usuario)
+    const db = window.secondaryDb || window.db
+    await db.collection('users').doc(uid).set({
       username: uname,
       isAdmin: false,
       state: {},
@@ -542,7 +562,7 @@ function save() {
     clearTimeout(_fbSaveTimer)
     _fbSaveTimer = setTimeout(() => {
       setSyncStatus('syncing')
-      window.ALBUM_DOC.set({ state, updatedAt: new Date().toISOString() })
+      window.ALBUM_DOC.set({ state, updatedAt: new Date().toISOString() }, { merge: true })
         .then(()  => setSyncStatus('synced'))
         .catch(() => setSyncStatus('error'))
     }, 800) // espera 800ms antes de escribir (agrupa cambios rápidos)
