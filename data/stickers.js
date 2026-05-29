@@ -1,5 +1,6 @@
 // ─── DATOS COMPLETOS — Álbum Panini FIFA World Cup 2026 ──────────────────────
-// 980 láminas: 9 intro + 48 selecciones × 20 + 11 historia
+// 980 láminas: 9 intro (FWC 00–8) + 48 selecciones × 20 (9–968) + 11 historia (FWC 9–19)
+// + 12 láminas CC promocionales Coca-Cola (no cuentan en el total oficial de 980)
 ;(function () {
   // ── 48 selecciones en orden oficial de sorteo ────────────────────────────
   const RAW = [
@@ -79,7 +80,7 @@
     { id:'fra', name:'Francia',           flag:'🇫🇷', conf:'UEFA',    group:'I',
       players:['Hugo Ekitiké','Kingsley Coman','Ousmane Dembélé','Aurélien Tchouaméni','Mike Maignan','Désiré Doué','Kylian Mbappé','Bradley Barcola','Adrien Rabiot','Manu Koné','Eduardo Camavinga','Michael Olise','Lucas Digne','Dayot Upamecano','Ibrahima Konaté','Jules Koundé','William Saliba','Théo Hernández'] },
     { id:'sen', name:'Senegal',           flag:'🇸🇳', conf:'CAF',     group:'I',
-      players:['Eekuaka Mendy','Vrdnam Diouf','Mgnesa Maraate','Artaulate Gecx','Ishal Jagoos','El Hallei Maluk Dioup','Malirei Koulibaly','Inrees Nena Queve','Lafillie Camada','Papr Papet Sarin','Papl Queve','Hger Diarra','Sadio Mané','Omala Sarr','Koefin Ulatta','Kaolah Jna','Lumco Hourue','Wrelhs Jarrson'] },
+      players:['Édouard Mendy','Seny Dieng','Kalidou Koulibaly','Abdou Diallo','Ismail Jakobs','Formose Mendy','Moussa Niakhaté','Pape Abou Cissé','Idrissa Gueye','Pape Matar Sarr','Lamine Camara','Nampalys Mendy','Cheikhou Kouyaté','Sadio Mané','Ismaïla Sarr','Iliman Ndiaye','Nicolas Jackson','Krepin Diatta'] },
     { id:'irq', name:'Irak',              flag:'🇮🇶', conf:'AFC',     group:'I',
       players:['Jalal Hassan','Mohammed Hameed','Fahad Thaeir','Ali Adnan','Saad Natiq','Bassam Rashid','Ahmed Ibrahim','Ali Faez','Humam Tariq','Alaa Abbas','Amjad Attwan','Mohanad Ali','Safaa Hadi','Ayman Hussein','Ali Jasim','Ahmed Yasin','Aiham Ousso','Dundar Hasrat'] },
     { id:'nor', name:'Noruega',           flag:'🇳🇴', conf:'UEFA',    group:'I',
@@ -141,21 +142,20 @@
     { num:979, code:'FWC 19', type:'history', label:'Sede — USA · Canadá · México 2026' },
   ]
 
+  // Stickers promocionales Coca-Cola × Panini (12 jugadores, no cuentan en el total de 980)
   const COCACOLA = [
-    { num:980, code:'CC 1',  type:'special', label:'Lautaro Martínez — Argentina',    special:true },
-    { num:981, code:'CC 2',  type:'special', label:'Emiliano Martínez — Argentina',   special:true },
+    { num:980, code:'CC 1',  type:'special', label:'Lamine Yamal — España',           special:true },
+    { num:981, code:'CC 2',  type:'special', label:'Joshua Kimmich — Alemania',       special:true },
     { num:982, code:'CC 3',  type:'special', label:'Virgil van Dijk — Países Bajos',  special:true },
-    { num:983, code:'CC 4',  type:'special', label:'Lamine Yamal — España',           special:true },
-    { num:984, code:'CC 5',  type:'special', label:'Federico Valverde — Uruguay',     special:true },
-    { num:985, code:'CC 6',  type:'special', label:'Alphonso Davies — Canadá',        special:true },
-    { num:986, code:'CC 7',  type:'special', label:'Joshua Kimmich — Alemania',       special:true },
-    { num:987, code:'CC 8',  type:'special', label:'Jefferson Lerma — Colombia',      special:true },
-    { num:988, code:'CC 9',  type:'special', label:'Raúl Jiménez — México',           special:true },
-    { num:989, code:'CC 10', type:'special', label:'Santiago Giménez — México',       special:true },
-    { num:990, code:'CC 11', type:'special', label:'Harry Kane — Inglaterra',         special:true },
-    { num:991, code:'CC 12', type:'special', label:'Enner Valencia — Ecuador',        special:true },
-    { num:992, code:'CC 13', type:'special', label:'Gabriel Magalhães — Brasil',      special:true },
-    { num:993, code:'CC 14', type:'special', label:'Joško Gvardiol — Croacia',        special:true },
+    { num:983, code:'CC 4',  type:'special', label:'Antonee Robinson — Estados Unidos',special:true },
+    { num:984, code:'CC 5',  type:'special', label:'Alphonso Davies — Canadá',        special:true },
+    { num:985, code:'CC 6',  type:'special', label:'Lautaro Martínez — Argentina',    special:true },
+    { num:986, code:'CC 7',  type:'special', label:'Harry Kane — Inglaterra',         special:true },
+    { num:987, code:'CC 8',  type:'special', label:'Edson Álvarez — México',          special:true },
+    { num:988, code:'CC 9',  type:'special', label:'Weston McKennie — Estados Unidos',special:true },
+    { num:989, code:'CC 10', type:'special', label:'Jefferson Lerma — Colombia',      special:true },
+    { num:990, code:'CC 11', type:'special', label:'Santiago Giménez — México',       special:true },
+    { num:991, code:'CC 12', type:'special', label:'Gabriel Magalhães — Brasil',      special:true },
   ]
 
   let nextNum = INTRO.length  // empieza en 9
@@ -173,10 +173,10 @@
   })
 
   window.ALBUM = {
-    intro: INTRO,
+    intro:    INTRO,
     countries: COUNTRIES,
-    history: HISTORY,
+    history:  HISTORY,
     cocacola: COCACOLA,
-    total: 994,
+    total: 980,   // álbum oficial: 9 intro + 960 selecciones + 11 historia
   }
 })()

@@ -836,18 +836,20 @@ function updateCountdown() {
 function renderAll() { renderSummary(); renderGrid() }
 
 function renderSummary() {
-  const all = ALBUM.countries.flatMap(c => c.stickers)
-  const specials = [...ALBUM.intro, ...ALBUM.history, ...ALBUM.cocacola]
-  const everything = [...all, ...specials]
+  // Base 980: intro + selecciones + historia (sin CC que son promocionales)
+  const all      = ALBUM.countries.flatMap(c => c.stickers)
+  const baseSpec = [...ALBUM.intro, ...ALBUM.history]
+  const base980  = [...all, ...baseSpec]
+
   let got = 0, rep = 0
-  everything.forEach(s => {
+  base980.forEach(s => {
     const v = getS(s.num)
     if (v >= 1) got++
-    if (v >= 2) rep += (v - 1)   // repetidas = copias extra
+    if (v >= 2) rep += (v - 1)
   })
-  const total   = ALBUM.total
+  const total   = ALBUM.total   // 980
   const missing = total - got
-  const pct     = (got/total*100).toFixed(1)
+  const pct     = (got / total * 100).toFixed(1)
 
   document.getElementById('cnt-got').textContent   = got
   document.getElementById('cnt-miss').textContent  = missing
@@ -856,10 +858,11 @@ function renderSummary() {
   document.getElementById('pct-num').textContent   = pct
   document.getElementById('prog-bar').style.width  = pct + '%'
 
-  // especiales
-  const specGot = specials.filter(s => getS(s.num) >= 1).length
+  // Especiales: contamos intro + historia + CC por separado
+  const allSpec = [...baseSpec, ...ALBUM.cocacola]
+  const specGot = allSpec.filter(s => getS(s.num) >= 1).length
   document.getElementById('spec-info').textContent =
-    `00 · FWC 1-19 · CC 1-14 · ${specGot}/${specials.length}`
+    `00 · FWC 1-19 · CC 1-12 · ${specGot}/${allSpec.length}`
 }
 
 function getCountryStatus(c) {
