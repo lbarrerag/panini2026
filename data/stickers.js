@@ -163,10 +163,17 @@
     const CC = c.id.toUpperCase()
     const stickers = []
     let pos = 1
-    // 1 = escudo (foil/badge), 2 = foto grupal (team), 3-20 = jugadores
+    // Estructura real del álbum:
+    // XX 1       = escudo (foil/badge)
+    // XX 2–12    = jugadores 1–11
+    // XX 13      = foto grupal del equipo
+    // XX 14–20   = jugadores 12–18
     stickers.push({ num: nextNum++, code: `${CC} ${pos++}`, type:'badge',  label:`Escudo — ${c.name}`,      special:true  })
+    c.players.slice(0, 11).forEach(p => {
+      stickers.push({ num: nextNum++, code: `${CC} ${pos++}`, type:'player', label: p, special:false })
+    })
     stickers.push({ num: nextNum++, code: `${CC} ${pos++}`, type:'team',   label:`Foto Grupal — ${c.name}`, special:false })
-    c.players.forEach(p => {
+    c.players.slice(11).forEach(p => {
       stickers.push({ num: nextNum++, code: `${CC} ${pos++}`, type:'player', label: p, special:false })
     })
     return { ...c, stickers, start: stickers[0].num, end: stickers[stickers.length-1].num }
