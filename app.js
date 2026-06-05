@@ -998,34 +998,27 @@ function openSpecials() {
 }
 
 // ── Interacción con sticker ───────────────────────────────────────────────────
-// Móvil:  tap simple = agregar · doble tap (< 350ms) = resetear a 0
-// Desktop: clic = agregar · clic derecho = resetear a 0
+// Tap / clic en la lámina = agregar copia
+// Tap / clic en el botón ✕ (aparece cuando está marcada) = resetear a 0
+// Clic derecho (PC) = resetear a 0
 function bindStickerInteraction(el, s, onIncrement, onReset) {
-  let lastTap = 0
-
-  el.addEventListener('click', () => {
-    const now = Date.now()
-    const isDouble = (now - lastTap) < 350
-
-    // Si es doble tap/clic: resetear
-    if (isDouble) {
-      lastTap = 0
+  el.addEventListener('click', e => {
+    // Si tocaron el botón ✕ → resetear
+    if (e.target.closest('.st-reset-btn')) {
       resetS(s.num)
       refreshSticker(el, s)
       if (navigator.vibrate) navigator.vibrate(40)
       onReset()
       return
     }
-
-    // Tap simple: incrementar
-    lastTap = now
+    // Clic normal → incrementar
     const newVal = cycleS(s.num)
     refreshSticker(el, s)
     animateSticker(el, newVal)
     onIncrement(newVal)
   })
 
-  // Clic derecho (desktop): resetear
+  // Clic derecho (PC): resetear
   el.addEventListener('contextmenu', e => {
     e.preventDefault()
     resetS(s.num)
@@ -1039,11 +1032,12 @@ function refreshSticker(el, s) {
   const cls = v === 0 ? '' : v === 1 ? ' got' : ' rep'
   el.className = 'sticker' + cls
   const icon = s.type==='badge'?'⭐':s.type==='team'?'📸':s.type==='history'?'🏅':'👤'
-  const repBadge = v >= 2
-    ? `<div class="st-rep-badge">×${v}</div>` : ''
+  const repBadge  = v >= 2 ? `<div class="st-rep-badge">×${v}</div>` : ''
+  const resetBtn  = v >= 1 ? `<button class="st-reset-btn" title="Borrar">✕</button>` : ''
   const stateLabel = v === 0 ? '○ Falta' : v === 1 ? '✓ Tengo' : `＋${v-1} extra${v-1>1?'s':''}`
   el.innerHTML = `
     ${repBadge}
+    ${resetBtn}
     <div class="st-num">${s.num}</div>
     <div class="st-code">${s.code}</div>
     <div class="st-icon">${icon}</div>

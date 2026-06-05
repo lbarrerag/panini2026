@@ -184,6 +184,23 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var
 .sticker.got .st-state{color:#4ade80}
 .sticker.rep .st-state{color:#fb923c}
 
+/* ── Botón ✕ para borrar lámina marcada ──────────────── */
+.st-reset-btn{
+  position:absolute;top:-7px;left:-7px;
+  width:20px;height:20px;
+  background:#dc2626;color:#fff;
+  border:none;border-radius:50%;
+  font-size:.62rem;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:3;
+  line-height:1;padding:0;
+  box-shadow:0 2px 5px rgba(0,0,0,.5);
+  transition:transform .15s,background .15s;
+  -webkit-touch-callout:none;user-select:none;
+}
+.st-reset-btn:hover{transform:scale(1.25);background:#b91c1c}
+.st-reset-btn:active{transform:scale(.9)}
+
 /* ── Badge numérico repetidas en sticker ─────────────── */
 .st-rep-badge{
   position:absolute;top:-7px;right:-7px;
