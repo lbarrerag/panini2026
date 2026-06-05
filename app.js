@@ -915,7 +915,7 @@ function renderGrid() {
     const rep   = c.stickers.reduce((acc,s) => acc + Math.max(0, getS(s.num)-1), 0)
     const total = c.stickers.length
     const pct   = Math.round(got/total*100)
-    const code  = c.id.toUpperCase()   // código de las láminas (BIH, MEX, ARG…)
+    const code  = c.id.toUpperCase()   // código FIFA de las láminas (BIH, MEX, ARG…)
 
     const card = document.createElement('div')
     card.className = 'country-card'
@@ -923,10 +923,7 @@ function renderGrid() {
       ? `<span class="rep-badge">↻ ${rep}</span>` : ''
     card.innerHTML = `
       <div class="card-top">
-        <div class="flag-wrap">
-          <span class="flag">${c.flag}</span>
-          <span class="flag-code">${code}</span>
-        </div>
+        <div class="country-code-box">${code}</div>
         <div style="min-width:0;flex:1">
           <div class="country-name">${c.name}${repBadge}</div>
           <span class="group-badge gb-${c.group}">G-${c.group}</span>
