@@ -1047,7 +1047,7 @@ function refreshSticker(el, s) {
     <div class="st-num">${s.num}</div>
     <div class="st-code">${s.code}</div>
     <div class="st-icon">${icon}</div>
-    <div class="st-label">${s.label}</div>
+    ${s.label ? `<div class="st-label">${s.label}</div>` : ''}
     <div class="st-state">${stateLabel}</div>
   `
 }
