@@ -1,4 +1,4 @@
-const CACHE = 'panini2026-v12'
+const CACHE = 'panini2026-v13'
 const ASSETS = [
   '/panini2026/',
   '/panini2026/index.html',

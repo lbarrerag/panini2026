@@ -907,11 +907,15 @@ function renderGrid() {
     return true
   })
 
+  // Ordenar alfabéticamente por nombre
+  countries.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+
   countries.forEach(c => {
     const got   = c.stickers.filter(s => getS(s.num) >= 1).length
     const rep   = c.stickers.reduce((acc,s) => acc + Math.max(0, getS(s.num)-1), 0)
     const total = c.stickers.length
     const pct   = Math.round(got/total*100)
+    const code  = c.id.toUpperCase()   // código de las láminas (BIH, MEX, ARG…)
 
     const card = document.createElement('div')
     card.className = 'country-card'
@@ -919,7 +923,10 @@ function renderGrid() {
       ? `<span class="rep-badge">↻ ${rep}</span>` : ''
     card.innerHTML = `
       <div class="card-top">
-        <span class="flag">${c.flag}</span>
+        <div class="flag-wrap">
+          <span class="flag">${c.flag}</span>
+          <span class="flag-code">${code}</span>
+        </div>
         <div style="min-width:0;flex:1">
           <div class="country-name">${c.name}${repBadge}</div>
           <span class="group-badge gb-${c.group}">G-${c.group}</span>
@@ -946,8 +953,9 @@ function renderGrid() {
 function openModal(country) {
   const modal   = document.getElementById('modal')
   const mgrid   = document.getElementById('modal-grid')
-  document.getElementById('modal-title').textContent =
-    `${country.flag}  ${country.name}`
+  const cc = country.id.toUpperCase()
+  document.getElementById('modal-title').innerHTML =
+    `<span class="modal-cc">${cc}</span> ${country.name}`
   document.getElementById('modal-sub').textContent =
     `Grupo ${country.group} · ${country.conf} · Láminas ${country.start}–${country.end}`
   mgrid.innerHTML = ''
