@@ -907,8 +907,8 @@ function renderGrid() {
     return true
   })
 
-  // Ordenar alfabéticamente por nombre
-  countries.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+  // Ordenar alfabéticamente por código de láminas (BIH, MEX, ARG…)
+  countries.sort((a, b) => a.id.localeCompare(b.id))
 
   countries.forEach(c => {
     const got   = c.stickers.filter(s => getS(s.num) >= 1).length
