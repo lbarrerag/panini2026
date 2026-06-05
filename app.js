@@ -940,20 +940,10 @@ function openModal(country) {
     const el = document.createElement('div')
     el.className = 'sticker'
     refreshSticker(el, s)
-    el.addEventListener('click', () => {
-      const newVal = cycleS(s.num)
-      refreshSticker(el,s)
-      animateSticker(el, newVal)
-      refreshCounter()
-      renderAll()
-    })
-    el.addEventListener('contextmenu', e => {
-      e.preventDefault()
-      resetS(s.num)
-      refreshSticker(el,s)
-      refreshCounter()
-      renderAll()
-    })
+    bindStickerInteraction(el, s,
+      () => { refreshCounter(); renderAll() },
+      () => { refreshCounter(); renderAll() }
+    )
     mgrid.appendChild(el)
   })
 
@@ -973,23 +963,52 @@ function openSpecials() {
     const el = document.createElement('div')
     el.className = 'sticker'
     refreshSticker(el, s)
-    el.addEventListener('click', () => {
-      const newVal = cycleS(s.num)
-      refreshSticker(el,s)
-      animateSticker(el, newVal)
-      renderSummary()
-    })
-    el.addEventListener('contextmenu', e => {
-      e.preventDefault()
-      resetS(s.num)
-      refreshSticker(el,s)
-      renderSummary()
-    })
+    bindStickerInteraction(el, s,
+      () => renderSummary(),
+      () => renderSummary()
+    )
     mgrid.appendChild(el)
   })
 
   modal.classList.remove('hidden')
   document.body.style.overflow = 'hidden'
+}
+
+// ── Interacción con sticker (click/tap = incrementar, long-press/clic derecho = resetear) ──
+function bindStickerInteraction(el, s, onIncrement, onReset) {
+  let pressTimer = null
+  let didLongPress = false
+
+  // ── Touch: presión larga = resetear (equivalente a clic derecho en móvil) ──
+  el.addEventListener('touchstart', () => {
+    didLongPress = false
+    pressTimer = setTimeout(() => {
+      didLongPress = true
+      resetS(s.num)
+      refreshSticker(el, s)
+      if (navigator.vibrate) navigator.vibrate(50)  // feedback háptico
+      onReset()
+    }, 500)
+  }, { passive: true })
+  el.addEventListener('touchend',  () => clearTimeout(pressTimer))
+  el.addEventListener('touchmove', () => clearTimeout(pressTimer))
+
+  // ── Click / tap: incrementar (se ignora si vino de long-press) ──
+  el.addEventListener('click', () => {
+    if (didLongPress) { didLongPress = false; return }
+    const newVal = cycleS(s.num)
+    refreshSticker(el, s)
+    animateSticker(el, newVal)
+    onIncrement(newVal)
+  })
+
+  // ── Clic derecho (desktop): resetear ──
+  el.addEventListener('contextmenu', e => {
+    e.preventDefault()
+    resetS(s.num)
+    refreshSticker(el, s)
+    onReset()
+  })
 }
 
 function refreshSticker(el, s) {
