@@ -172,7 +172,7 @@ body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var
 .modal-grid{overflow-y:auto;padding:.75rem 1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.55rem}
 
 /* Sticker tile */
-.sticker{background:var(--empty);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .45rem;text-align:center;cursor:pointer;transition:transform .12s,border-color .15s,background .15s;user-select:none}
+.sticker{background:var(--empty);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .45rem;text-align:center;cursor:pointer;transition:transform .12s,border-color .15s,background .15s;user-select:none;-webkit-touch-callout:none}
 .sticker:hover{transform:scale(1.04);border-color:var(--yellow)}
 .sticker.got{background:#052e16;border-color:#16a34a}
 .sticker.rep{background:#431407;border-color:#c2410c}

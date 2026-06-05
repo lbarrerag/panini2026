@@ -997,35 +997,35 @@ function openSpecials() {
   document.body.style.overflow = 'hidden'
 }
 
-// ── Interacción con sticker (click/tap = incrementar, long-press/clic derecho = resetear) ──
+// ── Interacción con sticker ───────────────────────────────────────────────────
+// Móvil:  tap simple = agregar · doble tap (< 350ms) = resetear a 0
+// Desktop: clic = agregar · clic derecho = resetear a 0
 function bindStickerInteraction(el, s, onIncrement, onReset) {
-  let pressTimer = null
-  let didLongPress = false
+  let lastTap = 0
 
-  // ── Touch: presión larga = resetear (equivalente a clic derecho en móvil) ──
-  el.addEventListener('touchstart', () => {
-    didLongPress = false
-    pressTimer = setTimeout(() => {
-      didLongPress = true
+  el.addEventListener('click', () => {
+    const now = Date.now()
+    const isDouble = (now - lastTap) < 350
+
+    // Si es doble tap/clic: resetear
+    if (isDouble) {
+      lastTap = 0
       resetS(s.num)
       refreshSticker(el, s)
-      if (navigator.vibrate) navigator.vibrate(50)  // feedback háptico
+      if (navigator.vibrate) navigator.vibrate(40)
       onReset()
-    }, 500)
-  }, { passive: true })
-  el.addEventListener('touchend',  () => clearTimeout(pressTimer))
-  el.addEventListener('touchmove', () => clearTimeout(pressTimer))
+      return
+    }
 
-  // ── Click / tap: incrementar (se ignora si vino de long-press) ──
-  el.addEventListener('click', () => {
-    if (didLongPress) { didLongPress = false; return }
+    // Tap simple: incrementar
+    lastTap = now
     const newVal = cycleS(s.num)
     refreshSticker(el, s)
     animateSticker(el, newVal)
     onIncrement(newVal)
   })
 
-  // ── Clic derecho (desktop): resetear ──
+  // Clic derecho (desktop): resetear
   el.addEventListener('contextmenu', e => {
     e.preventDefault()
     resetS(s.num)
