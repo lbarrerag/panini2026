@@ -634,17 +634,28 @@ function initFirebaseSync() {
   if (!window.ALBUM_DOC) return
   setSyncStatus('syncing')
 
-  // 1. Carga estado desde Firestore al abrir la app
   window.ALBUM_DOC.get()
     .then(docSnap => {
       if (docSnap.exists && docSnap.data().state) {
-        const remote = docSnap.data().state
-        // Usar el estado con más láminas registradas (evita perder datos)
-        if (Object.keys(remote).length >= Object.keys(state).length) {
+        const remote   = docSnap.data().state
+        const remoteTs = docSnap.data().updatedAt || ''
+        const localTs  = localStorage.getItem(LS_UPDATED) || ''
+
+        if (remoteTs > localTs) {
+          // Firestore es más reciente (otra sesión / otro dispositivo)
           state = remote
-          try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch(_) {}
+          try {
+            localStorage.setItem(LS_KEY, JSON.stringify(state))
+            localStorage.setItem(LS_UPDATED, remoteTs)
+          } catch(_) {}
           renderAll()
+        } else if (localTs > remoteTs) {
+          // Local es más reciente (guardado pendiente no llegó a Firestore)
+          // Forzar sincronización inmediata para no perder los cambios
+          window.ALBUM_DOC.set({ state, updatedAt: localTs }, { merge: true })
+            .catch(() => {})
         }
+        // Si son iguales, no hay nada que hacer
       }
       setSyncStatus('synced')
       setupFirestoreListener()
@@ -657,15 +668,21 @@ function initFirebaseSync() {
 
 function setupFirestoreListener() {
   if (!window.ALBUM_DOC) return
-  // Escucha cambios en tiempo real (sincroniza entre dispositivos)
   window.ALBUM_DOC.onSnapshot(docSnap => {
     if (!docSnap.exists) return
-    const remote = docSnap.data().state
+    const remote   = docSnap.data().state
     if (!remote) return
-    // Solo actualiza si hay diferencias (evita loop con nuestros propios guardados)
-    if (JSON.stringify(remote) !== JSON.stringify(state)) {
+    const remoteTs = docSnap.data().updatedAt || ''
+    const localTs  = localStorage.getItem(LS_UPDATED) || ''
+
+    // Solo sobrescribir si Firestore es ESTRICTAMENTE más reciente
+    // (evita que datos viejos de Firestore deshagan cambios locales pendientes)
+    if (remoteTs > localTs && JSON.stringify(remote) !== JSON.stringify(state)) {
       state = remote
-      try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch(_) {}
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(state))
+        localStorage.setItem(LS_UPDATED, remoteTs)
+      } catch(_) {}
       renderAll()
       setSyncStatus('synced')
     }
@@ -786,21 +803,27 @@ function buildShareRepURL() {
 initLogin()
 
 // ─── Mi Álbum Panini 2026 ────────────────────────────────────────────────────
-const LS_KEY = 'panini2026_v1'
+const LS_KEY     = 'panini2026_v1'
+const LS_UPDATED = 'panini2026_updated_v1'  // timestamp del último guardado local
 
 let state = {}
 try { state = JSON.parse(localStorage.getItem(LS_KEY) || '{}') } catch (_) { state = {} }
 let _fbSaveTimer = null
+
 function save() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)) } catch (_) {}
+  const ts = new Date().toISOString()
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state))
+    localStorage.setItem(LS_UPDATED, ts)   // ← guardar timestamp junto con los datos
+  } catch (_) {}
   if (window.ALBUM_DOC) {
     clearTimeout(_fbSaveTimer)
     _fbSaveTimer = setTimeout(() => {
       setSyncStatus('syncing')
-      window.ALBUM_DOC.set({ state, updatedAt: new Date().toISOString() }, { merge: true })
+      window.ALBUM_DOC.set({ state, updatedAt: ts }, { merge: true })
         .then(()  => setSyncStatus('synced'))
         .catch(() => setSyncStatus('error'))
-    }, 800) // espera 800ms antes de escribir (agrupa cambios rápidos)
+    }, 800)
   }
 }
 
