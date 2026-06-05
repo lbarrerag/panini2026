@@ -862,7 +862,7 @@ function renderSummary() {
   const allSpec = [...baseSpec, ...ALBUM.cocacola]
   const specGot = allSpec.filter(s => getS(s.num) >= 1).length
   document.getElementById('spec-info').textContent =
-    `00 · FWC 1-19 · CC 1-12 · ${specGot}/${allSpec.length}`
+    `00 · FWC 1-19 · CC 1-14 · ${specGot}/${allSpec.length}`
 }
 
 function getCountryStatus(c) {
